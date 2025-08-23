@@ -2,6 +2,7 @@ package pwmanager;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
+import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,8 +12,16 @@ public class PasswordManager {
   private SecretKeySpec secretKey;
 
   public PasswordManager(String masterPassword) throws Exception {
-    byte[] key = masterPassword.getBytes("UTF-8");
-    secretKey = new SecretKeySpec(key, "AES");
+    secretKey = getSecretKey(masterPassword);
+    
+  }
+
+  public SecretKeySpec getSecretKey(String masterPassword) throws Exception {
+    MessageDigest sha = MessageDigest.getInstance("SHA-256");
+    byte[] key = sha.digest(masterPassword.getBytes("UTF-8"));
+    byte[] key16 = new byte[16];
+    System.arraycopy(key, 0, key16, 0, 16);
+    return new SecretKeySpec(key16, "AES");
   }
 
   public void addPassword(String service, String password) throws Exception {
