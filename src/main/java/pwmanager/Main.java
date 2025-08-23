@@ -1,12 +1,28 @@
 package pwmanager;
 
+import java.io.*;
 import java.util.Scanner;
 
 public class Main {
   public static void main(String[] args) throws Exception {
     Scanner sc = new Scanner(System.in);
-    System.out.print("Enter your master password: ");
-    String masterPassword = sc.next();
+    String masterPassword;
+
+    File dir = new File(System.getProperty("user.home"), ".password-manager");
+    dir.mkdirs();
+
+    File masterPwdFile = new File(dir, "master.dat");
+
+    if (!masterPwdFile.exists()) {
+      System.out.println("Master password not yet set. Please create one.");
+      System.out.print("Enter your master password: ");
+      masterPassword = sc.next();
+      createMasterPassword(masterPassword);
+    } else {
+      System.out.print("Enter your master password: ");
+      masterPassword = sc.next();
+      verifyMasterPassword(masterPassword);
+    }
 
     PasswordManager manager = new PasswordManager(masterPassword);
     PasswordGenerator generator = new PasswordGenerator();
@@ -58,5 +74,48 @@ public class Main {
     System.out.print("Service: ");
     String service = sc.nextLine();
     System.out.println("Password: " + manager.getPassword(service));
+  }
+
+  private static void createMasterPassword(String masterPassword) throws Exception {
+    PasswordManager temp = new PasswordManager(masterPassword);
+    String encrypted = temp.encrypt(masterPassword);
+
+    File dir = new File(System.getProperty("user.home"), ".password-manager");
+    File masterFile = new File(dir, "master.dat");
+
+    try (FileWriter writer = new FileWriter(masterFile)) {
+      writer.write(encrypted);
+    }
+
+    System.out.println("Master password set successfully.");
+  }
+
+  private static void verifyMasterPassword(String masterPassword) throws Exception {
+    PasswordManager temp = new PasswordManager(masterPassword);
+    File dir = new File(System.getProperty("user.home"), ".password-manager");
+    File masterPwdFile = new File(dir, "master.dat");
+
+    if (!masterPwdFile.exists()) {
+      System.out.println("No master password found.");
+      return;
+    }
+
+    String encrypted;
+    try (BufferedReader br = new BufferedReader(new FileReader(masterPwdFile))) {
+      encrypted = br.readLine();
+    }
+
+    try {
+      String decrypted = temp.decrypt(encrypted);
+      if (!decrypted.equals(masterPassword)) {
+        System.out.println("Incorrect master password. Exiting...");
+        System.exit(0);
+      }
+    } catch (Exception e) {
+      System.out.println("Incorrect master password. Exiting...");
+      System.exit(0);
+    }
+
+    System.out.println("Master password verified successfully.");
   }
 }

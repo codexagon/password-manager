@@ -34,13 +34,13 @@ public class PasswordManager {
     return decrypt(encrypted);
   }
 
-  private String encrypt(String plaintext) throws Exception {
+  public String encrypt(String plaintext) throws Exception {
     Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
     cipher.init(Cipher.ENCRYPT_MODE, secretKey);
     return Base64.getEncoder().encodeToString(cipher.doFinal(plaintext.getBytes("UTF-8")));
   }
 
-  private String decrypt(String ciphertext) throws Exception {
+  public String decrypt(String ciphertext) throws Exception {
     Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
     cipher.init(Cipher.DECRYPT_MODE, secretKey);
     return new String(cipher.doFinal(Base64.getDecoder().decode(ciphertext)));
