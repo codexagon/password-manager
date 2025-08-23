@@ -1,5 +1,7 @@
 package pwmanager;
 
+import utils.FileHelper;
+
 import java.io.*;
 import java.util.Scanner;
 
@@ -83,7 +85,7 @@ public class Main {
     File dir = new File(System.getProperty("user.home"), ".password-manager");
     File masterFile = new File(dir, "master.dat");
 
-    try (FileWriter writer = new FileWriter(masterFile)) {
+    try (BufferedWriter writer = FileHelper.getWriter(masterFile)) {
       writer.write(encrypted);
     }
 
@@ -101,8 +103,8 @@ public class Main {
     }
 
     String encrypted;
-    try (BufferedReader br = new BufferedReader(new FileReader(masterPwdFile))) {
-      encrypted = br.readLine();
+    try (BufferedReader reader = FileHelper.getReader(masterPwdFile)) {
+      encrypted = reader.readLine();
     }
 
     try {
