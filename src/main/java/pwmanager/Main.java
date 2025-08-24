@@ -3,6 +3,7 @@ package pwmanager;
 import utils.FileHelper;
 
 import java.io.*;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
@@ -58,6 +59,7 @@ public class Main {
       case "generate" -> generatePassword(parts, generator);
       case "add" -> addPassword(parts, manager);
       case "get" -> getPassword(parts, manager);
+      case "list" -> listServices(manager);
       case "delete" -> deletePassword(parts, manager);
       case "quit", "exit" -> running = false;
     }
@@ -151,6 +153,17 @@ public class Main {
       System.out.println("Deleted password for service: " + parts[1]);
     } else {
       System.out.println("No password found for service: " + parts[1]);
+    }
+  }
+
+  private static void listServices(PasswordManager manager) {
+    List<String> services = manager.listServices();
+    if (services.isEmpty()) {
+      System.out.println("No services stored");
+    } else {
+      for (String service : services) {
+        System.out.println("- " + service);
+      }
     }
   }
 

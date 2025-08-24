@@ -3,9 +3,7 @@ package pwmanager;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.MessageDigest;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class PasswordManager {
   private Map<String, String> passwords = new HashMap<>();
@@ -40,6 +38,10 @@ public class PasswordManager {
 
   public boolean deletePassword(String service) {
     return passwords.remove(service) != null;
+  }
+
+  public List<String> listServices() {
+    return new ArrayList<>(passwords.keySet());
   }
 
   public String encrypt(String plaintext) throws Exception {
