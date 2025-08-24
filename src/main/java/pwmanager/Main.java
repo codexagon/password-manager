@@ -58,6 +58,7 @@ public class Main {
       case "generate" -> generatePassword(parts, generator);
       case "add" -> addPassword(parts, manager);
       case "get" -> getPassword(parts, manager);
+      case "delete" -> deletePassword(parts, manager);
       case "quit", "exit" -> running = false;
     }
   }
@@ -117,8 +118,12 @@ public class Main {
       return;
     }
 
-    manager.addPassword(parts[1], parts[2]);
-    System.out.println("Password for " + parts[1] + " saved.");
+    String old = manager.addPassword(parts[1], parts[2]);
+    if (old != null) {
+      System.out.println("Updated password for service: " + parts[1]);
+    } else {
+      System.out.println("Added new password for service: " + parts[1]);
+    }
   }
 
   private static void getPassword(String[] parts, PasswordManager manager) throws Exception {
@@ -133,6 +138,19 @@ public class Main {
       System.out.println("No password found for service: " + parts[1]);
     } else {
       System.out.println("Password: " + password);
+    }
+  }
+
+  private static void deletePassword(String[] parts, PasswordManager manager) {
+    if (parts.length != 2) {
+      System.out.println("Usage: delete <service>");
+      return;
+    }
+
+    if (manager.deletePassword(parts[1])) {
+      System.out.println("Deleted password for service: " + parts[1]);
+    } else {
+      System.out.println("No password found for service: " + parts[1]);
     }
   }
 

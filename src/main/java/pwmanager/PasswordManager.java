@@ -28,14 +28,18 @@ public class PasswordManager {
     return new SecretKeySpec(key16, "AES");
   }
 
-  public void addPassword(String service, String password) throws Exception {
-    passwords.put(service, encrypt(password));
+  public String addPassword(String service, String password) throws Exception {
+    return passwords.put(service, encrypt(password));
   }
 
   public String getPassword(String service) throws Exception {
     String encrypted = passwords.get(service);
     if (encrypted == null) return null;
     return decrypt(encrypted);
+  }
+
+  public boolean deletePassword(String service) {
+    return passwords.remove(service) != null;
   }
 
   public String encrypt(String plaintext) throws Exception {
