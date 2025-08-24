@@ -6,8 +6,9 @@ import java.io.*;
 import java.util.Scanner;
 
 public class Main {
+  static boolean running = true;
+
   public static void main(String[] args) throws Exception {
-    Scanner sc = new Scanner(System.in);
     String masterPassword;
 
     // Create .password-manager directory and check if it's created properly
@@ -26,65 +27,113 @@ public class Main {
     if (!masterPwdFile.exists()) {
       System.out.println("Master password not yet set. Please create one.");
       System.out.print("Enter your master password: ");
-      masterPassword = sc.next();
+      masterPassword = getInput("");
       createMasterPassword(masterPassword);
     } else {
       System.out.print("Enter your master password: ");
-      masterPassword = sc.next();
+      masterPassword = getInput("");
       verifyMasterPassword(masterPassword);
     }
 
     PasswordManager manager = new PasswordManager(masterPassword);
     PasswordGenerator generator = new PasswordGenerator();
 
-    boolean running = true;
-
     // Main program loop
     while(running) {
-      System.out.println("1. Generate password");
-      System.out.println("2. Add password");
-      System.out.println("3. Get password");
-      System.out.println("4. Quit");
-      int choice = sc.nextInt();
-      sc.nextLine();
-
-      switch(choice) {
-        case 1 -> generatePassword(sc, generator);
-        case 2 -> addPassword(sc, manager);
-        case 3 -> getPassword(sc, manager);
-        case 4 -> running = false;
-      }
+      String input = getInput("> ");
+      handleInput(input, manager, generator);
     }
   }
 
-  private static void generatePassword(Scanner sc, PasswordGenerator generator) {
-    System.out.print("Enter password length: ");
-    int length = sc.nextInt();
-    System.out.print("Use uppercase alphabets? (true/false) ");
-    boolean upperChoice = sc.nextBoolean();
-    System.out.print("Use lowercase alphabets? (true/false) ");
-    boolean lowerChoice = sc.nextBoolean();
-    System.out.print("Use numbers? (true/false) ");
-    boolean numbersChoice = sc.nextBoolean();
-    System.out.print("Use symbols? (true/false) ");
-    boolean symbolsChoice = sc.nextBoolean();
-    sc.nextLine();
+  static String getInput(String indicator) {
+    Scanner sc = new Scanner(System.in);
+    System.out.print(indicator);
+    return sc.nextLine();
+  }
+
+  static void handleInput(String input, PasswordManager manager, PasswordGenerator generator) throws Exception {
+    String[] parts = input.split(" ");
+
+    switch(parts[0]) {
+      case "generate" -> generatePassword(parts, generator);
+      case "add" -> addPassword(parts, manager);
+      case "get" -> getPassword(parts, manager);
+      case "quit", "exit" -> running = false;
+    }
+  }
+
+  private static void generatePassword(String[] parts, PasswordGenerator generator) {
+    if (parts.length < 2) {
+      System.out.println("Usage: generate <length> [-u/--uppercase] [-l/--lowercase] [-n/--numbers] [-s/--symbols]");
+      System.out.println("Default: all character sets enabled");
+      return;
+    }
+
+    int length;
+    try {
+      if (parts[1].equals("--help") || parts[1].equals("-h")) {
+        System.out.println("Usage: generate <length> [-u/--uppercase] [-l/--lowercase] [-n/--numbers] [-s/--symbols]");
+        System.out.println("Default: all character sets enabled");
+      }
+      length = Integer.parseInt(parts[1]);
+    } catch (NumberFormatException nfe) {
+      System.out.println("Password length must be a number.");
+      return;
+    }
+
+    boolean upperChoice = true, lowerChoice = true, numbersChoice = true, symbolsChoice = true;
+
+    if (parts.length > 2) {
+      upperChoice = false;
+      lowerChoice = false;
+      numbersChoice = false;
+      symbolsChoice = false;
+
+      for (int i = 2; i < parts.length; i++) {
+        switch (parts[i]) {
+          case "-u", "--uppercase" -> upperChoice = true;
+          case "-l", "--lowercase" -> lowerChoice = true;
+          case "-n", "--numbers" -> numbersChoice = true;
+          case "-s", "--symbols" -> symbolsChoice = true;
+          default -> {
+            System.out.println("Unknown option " + parts[i]);
+            return;
+          }
+        }
+      }
+    }
+
+    if (!upperChoice && !lowerChoice && !numbersChoice && !symbolsChoice) {
+      System.out.println("Error: At least one character set must be enabled.");
+      return;
+    }
+
     System.out.println("Password: " + generator.generatePassword(length, upperChoice, lowerChoice, numbersChoice, symbolsChoice));
   }
 
-  private static void addPassword(Scanner sc, PasswordManager manager) throws Exception {
-    System.out.print("Service: ");
-    String service = sc.nextLine();
-    System.out.print("Password: ");
-    String password = sc.nextLine();
-    manager.addPassword(service, password);
-    System.out.println("Password saved.");
+  private static void addPassword(String[] parts, PasswordManager manager) throws Exception {
+    if (parts.length != 3) {
+      System.out.println("Usage: add <service> <password>");
+      return;
+    }
+
+    manager.addPassword(parts[1], parts[2]);
+    System.out.println("Password for " + parts[1] + " saved.");
   }
 
-  private static void getPassword(Scanner sc, PasswordManager manager) throws Exception {
-    System.out.print("Service: ");
-    String service = sc.nextLine();
-    System.out.println("Password: " + manager.getPassword(service));
+  private static void getPassword(String[] parts, PasswordManager manager) throws Exception {
+    if (parts.length != 2) {
+      System.out.println("Usage: get <service>");
+      return;
+    }
+
+    String password = manager.getPassword(parts[1]);
+
+    if (password == null) {
+      System.out.println("No password found for service: " + parts[1]);
+    } else {
+      System.out.println("Password: " + password);
+    }
   }
 
   private static void createMasterPassword(String masterPassword) throws Exception {
