@@ -10,11 +10,19 @@ public class Main {
     Scanner sc = new Scanner(System.in);
     String masterPassword;
 
+    // Create .password-manager directory and check if it's created properly
     File dir = new File(System.getProperty("user.home"), ".password-manager");
-    dir.mkdirs();
+    if (!dir.exists() && !dir.mkdirs()) {
+      throw new IOException("Failed to create directory " + dir.getAbsolutePath());
+    }
 
+    // Create master password file
     File masterPwdFile = new File(dir, "master.dat");
 
+    /* 
+     - If master password file doesn't exist, prompt user to create a master password
+     - If master password file exists, verify the entered master password
+    */
     if (!masterPwdFile.exists()) {
       System.out.println("Master password not yet set. Please create one.");
       System.out.print("Enter your master password: ");
@@ -31,6 +39,7 @@ public class Main {
 
     boolean running = true;
 
+    // Main program loop
     while(running) {
       System.out.println("1. Generate password");
       System.out.println("2. Add password");
@@ -80,11 +89,13 @@ public class Main {
 
   private static void createMasterPassword(String masterPassword) throws Exception {
     PasswordManager temp = new PasswordManager(masterPassword);
-    String encrypted = temp.encrypt(masterPassword);
+    String encrypted = temp.encrypt(masterPassword); // encrypt master password
 
+    // Create master.dat file
     File dir = new File(System.getProperty("user.home"), ".password-manager");
     File masterFile = new File(dir, "master.dat");
 
+    // Write the encrypted master password to master.dat
     try (BufferedWriter writer = FileHelper.getWriter(masterFile)) {
       writer.write(encrypted);
     }
@@ -97,16 +108,19 @@ public class Main {
     File dir = new File(System.getProperty("user.home"), ".password-manager");
     File masterPwdFile = new File(dir, "master.dat");
 
+    // Check if master.dat file exists
     if (!masterPwdFile.exists()) {
       System.out.println("No master password found.");
       return;
     }
 
+    // Read the encrypted master password
     String encrypted;
     try (BufferedReader reader = FileHelper.getReader(masterPwdFile)) {
       encrypted = reader.readLine();
     }
 
+    // Decrypt the encrypted master password and check if it matches the entered password
     try {
       String decrypted = temp.decrypt(encrypted);
       if (!decrypted.equals(masterPassword)) {
