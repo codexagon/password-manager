@@ -6,7 +6,7 @@ import java.security.MessageDigest;
 import java.util.*;
 
 public class PasswordManager {
-  private Map<String, String> passwords = new HashMap<>();
+  private Map<String, Credential> passwords = new HashMap<>();
   private SecretKeySpec secretKey;
 
   public PasswordManager(String masterPassword) throws Exception {
@@ -26,17 +26,26 @@ public class PasswordManager {
     return new SecretKeySpec(key16, "AES");
   }
 
-  public String addPassword(String service, String password) throws Exception {
-    return passwords.put(service, encrypt(password));
+  public Credential addCredential(String service, String username, String password) throws Exception {
+    return passwords.put(service, new Credential(username, encrypt(password)));
   }
 
-  public String getPassword(String service) throws Exception {
-    String encrypted = passwords.get(service);
-    if (encrypted == null) return null;
-    return decrypt(encrypted);
+  public Credential getCredential(String service) {
+    return passwords.get(service);
   }
 
-  public boolean deletePassword(String service) {
+  /*
+   - Decrypts and returns the plaintext password from the credential.
+   - NOTE: This method exposes the password in plaintext, so it should be used sparingly.
+   - Callers are responsible for ensuring the decrypted password is handled securely and
+     cleared when no longer needed.
+  */
+  public String getDecryptedPassword(Credential credential) throws Exception {
+    if (credential == null) return null;
+    return decrypt(credential.getPassword());
+  }
+
+  public boolean deleteCredential(String service) {
     return passwords.remove(service) != null;
   }
 

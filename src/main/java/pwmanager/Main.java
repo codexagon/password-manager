@@ -57,10 +57,10 @@ public class Main {
 
     switch(parts[0]) {
       case "generate" -> generatePassword(parts, generator);
-      case "add" -> addPassword(parts, manager);
-      case "get" -> getPassword(parts, manager);
+      case "add" -> addCredential(parts, manager);
+      case "get" -> getCredential(parts, manager);
       case "list" -> listServices(manager);
-      case "delete" -> deletePassword(parts, manager);
+      case "delete" -> deleteCredential(parts, manager);
       case "quit", "exit" -> running = false;
     }
   }
@@ -114,13 +114,13 @@ public class Main {
     System.out.println("Password: " + generator.generatePassword(length, upperChoice, lowerChoice, numbersChoice, symbolsChoice));
   }
 
-  private static void addPassword(String[] parts, PasswordManager manager) throws Exception {
-    if (parts.length != 3) {
-      System.out.println("Usage: add <service> <password>");
+  private static void addCredential(String[] parts, PasswordManager manager) throws Exception {
+    if (parts.length != 4) {
+      System.out.println("Usage: add <service> <username> <password>");
       return;
     }
 
-    String old = manager.addPassword(parts[1], parts[2]);
+    Credential old = manager.addCredential(parts[1], parts[2], parts[3]);
     if (old != null) {
       System.out.println("Updated password for service: " + parts[1]);
     } else {
@@ -128,31 +128,32 @@ public class Main {
     }
   }
 
-  private static void getPassword(String[] parts, PasswordManager manager) throws Exception {
+  private static void getCredential(String[] parts, PasswordManager manager) throws Exception {
     if (parts.length != 2) {
       System.out.println("Usage: get <service>");
       return;
     }
 
-    String password = manager.getPassword(parts[1]);
+    Credential credential = manager.getCredential(parts[1]);
 
-    if (password == null) {
-      System.out.println("No password found for service: " + parts[1]);
+    if (credential == null) {
+      System.out.println("No credentials found for service: " + parts[1]);
     } else {
-      System.out.println("Password: " + password);
+      System.out.println("Username: " + credential.getUsername());
+      System.out.println("Password: " + manager.getDecryptedPassword(credential));
     }
   }
 
-  private static void deletePassword(String[] parts, PasswordManager manager) {
+  private static void deleteCredential(String[] parts, PasswordManager manager) {
     if (parts.length != 2) {
       System.out.println("Usage: delete <service>");
       return;
     }
 
-    if (manager.deletePassword(parts[1])) {
-      System.out.println("Deleted password for service: " + parts[1]);
+    if (manager.deleteCredential(parts[1])) {
+      System.out.println("Deleted credentials for service: " + parts[1]);
     } else {
-      System.out.println("No password found for service: " + parts[1]);
+      System.out.println("No credentials found for service: " + parts[1]);
     }
   }
 
