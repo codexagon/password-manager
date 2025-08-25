@@ -77,8 +77,13 @@ public class Main {
       if (parts[1].equals("--help") || parts[1].equals("-h")) {
         System.out.println("Usage: generate <length> [-u/--uppercase] [-l/--lowercase] [-n/--numbers] [-s/--symbols]");
         System.out.println("Default: all character sets enabled");
+        return;
       }
       length = Integer.parseInt(parts[1]);
+      if (length <= 0) {
+        System.out.println("Password length must be greater than 0.");
+        return;
+      }
     } catch (NumberFormatException nfe) {
       System.out.println("Password length must be a number.");
       return;
