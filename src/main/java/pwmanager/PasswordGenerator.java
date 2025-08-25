@@ -1,6 +1,9 @@
 package pwmanager;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class PasswordGenerator {
   // Define character sets
@@ -12,23 +15,38 @@ public class PasswordGenerator {
   private SecureRandom random = new SecureRandom();
 
   public String generatePassword(int length, boolean useUpper, boolean useLower, boolean useNumbers, boolean useSymbols) {
-    StringBuilder characterList = new StringBuilder();
+    List<String> characterSets = new ArrayList<>();
 
     // Add character sets to the list according to user preferences
-    if (useUpper) characterList.append(UPPER);
-    if (useLower) characterList.append(LOWER);
-    if (useNumbers) characterList.append(NUMBERS);
-    if (useSymbols) characterList.append(SYMBOLS);
+    if (useUpper) characterSets.add(UPPER);
+    if (useLower) characterSets.add(LOWER);
+    if (useNumbers) characterSets.add(NUMBERS);
+    if (useSymbols) characterSets.add(SYMBOLS);
 
-    if (characterList.isEmpty()) throw new IllegalArgumentException("Select at least one character type");
+    if (characterSets.isEmpty()) throw new IllegalArgumentException("Select at least one character type");
+    if (length < characterSets.size()) throw new IllegalArgumentException("Password length too short for selected character types");
 
-    // Build the password by choosing a random character from the list
-    StringBuilder password = new StringBuilder();
-    for (int i = 0; i < length; i++) {
-      int index = random.nextInt(characterList.length());
-      password.append(characterList.charAt(index));
+    List<Character> password = new ArrayList<>();
+
+    // Guarantee at least one character from each set is present
+    for (String set : characterSets) {
+      int index = random.nextInt(set.length());
+      password.add(set.charAt(index));
     }
 
-    return password.toString();
+    // Build the rest of the password by choosing a random set and a random character from that set
+    for (int i = 0; i < length; i++) {
+      String set = characterSets.get(random.nextInt(characterSets.size()));
+      int index = random.nextInt(set.length());
+      password.add(set.charAt(index));
+    }
+
+    // Shuffle the password so that guaranteed characters aren't at the first
+    Collections.shuffle(password, random);
+
+    StringBuilder finalPassword = new StringBuilder();
+    for (char c : password) finalPassword.append(c);
+
+    return finalPassword.toString();
   }
 }
