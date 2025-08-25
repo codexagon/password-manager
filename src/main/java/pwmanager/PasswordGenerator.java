@@ -12,6 +12,8 @@ public class PasswordGenerator {
   private SecureRandom random = new SecureRandom();
 
   public String generatePassword(int length, boolean useUpper, boolean useLower, boolean useNumbers, boolean useSymbols) {
+    if (length <= 0) throw new IllegalArgumentException("Password length must be greater than 0");
+
     StringBuilder characterList = new StringBuilder();
 
     // Add character sets to the list according to user preferences
