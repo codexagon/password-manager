@@ -58,6 +58,7 @@ public class Main {
     switch(parts[0]) {
       case "generate" -> generatePassword(parts, generator);
       case "add" -> addCredential(parts, manager);
+      case "update" -> updateCredential(parts, manager);
       case "get" -> getCredential(parts, manager);
       case "list" -> listServices(manager);
       case "delete" -> deleteCredential(parts, manager);
@@ -127,9 +128,32 @@ public class Main {
 
     Credential old = manager.addCredential(parts[1], parts[2], parts[3]);
     if (old != null) {
-      System.out.println("Updated password for service: " + parts[1]);
+      System.out.println("Credentials for service: " + parts[1] + " already exists. Use update instead.");
     } else {
       System.out.println("Added new password for service: " + parts[1]);
+    }
+  }
+
+  private static void updateCredential(String[] parts, PasswordManager manager) throws Exception {
+    if (parts.length != 4) {
+      System.out.println("Usage: update <service> <field> <newValue>");
+      return;
+    }
+
+    int updatedStatus = manager.updateCredential(parts[1], parts[2], parts[3]);
+    if (updatedStatus != 0) {
+      switch (updatedStatus) {
+        // 1: service does not exist in saved services
+        case 1 -> System.out.println("Service: " + parts[1] + " does not exist. Use add instead.");
+
+        // 2: new service name clashes with another service name in the HashMap
+        case 2 -> System.out.println("The new service name " + parts[3] + " clashes with another service in the database.");
+
+        // 3: update field provided is invalid
+        case 3 -> System.out.println("Invalid field. Choose a valid field to update.");
+      }
+    } else {
+      System.out.println("Updated " + parts[2] + " for service: " + parts[1]);
     }
   }
 

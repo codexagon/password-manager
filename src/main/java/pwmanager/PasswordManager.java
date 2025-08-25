@@ -30,6 +30,27 @@ public class PasswordManager {
     return passwords.put(service, new Credential(username, encrypt(password)));
   }
 
+  public int updateCredential(String service, String field, String newValue) throws Exception {
+    if (!passwords.containsKey(service)) {
+      return 1;
+    }
+
+    Credential oldCredentials = passwords.get(service);
+    switch(field) {
+      case "username" -> passwords.put(service, new Credential(newValue, oldCredentials.getPassword()));
+      case "password" -> passwords.put(service, new Credential(oldCredentials.getUsername(), encrypt(newValue)));
+      case "service" -> {
+        if (passwords.containsKey(newValue)) return 2;
+        passwords.remove(service);
+        passwords.put(newValue, oldCredentials);
+      }
+      default -> {
+        return 3;
+      }
+    }
+    return 0;
+  }
+
   public Credential getCredential(String service) {
     return passwords.get(service);
   }
