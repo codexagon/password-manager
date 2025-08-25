@@ -10,6 +10,7 @@ public class Main {
   static boolean running = true;
 
   public static void main(String[] args) throws Exception {
+    Scanner sc = new Scanner(System.in);
     String masterPassword;
 
     // Create .password-manager directory and check if it's created properly
@@ -28,11 +29,11 @@ public class Main {
     if (!masterPwdFile.exists()) {
       System.out.println("Master password not yet set. Please create one.");
       System.out.print("Enter your master password: ");
-      masterPassword = getInput("");
+      masterPassword = getInput(sc, "");
       createMasterPassword(masterPassword);
     } else {
       System.out.print("Enter your master password: ");
-      masterPassword = getInput("");
+      masterPassword = getInput(sc, "");
       verifyMasterPassword(masterPassword);
     }
 
@@ -41,13 +42,12 @@ public class Main {
 
     // Main program loop
     while(running) {
-      String input = getInput("> ");
+      String input = getInput(sc, "> ");
       handleInput(input, manager, generator);
     }
   }
 
-  static String getInput(String indicator) {
-    Scanner sc = new Scanner(System.in);
+  static String getInput(Scanner sc, String indicator) {
     System.out.print(indicator);
     return sc.nextLine();
   }
