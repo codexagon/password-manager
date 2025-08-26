@@ -43,7 +43,7 @@ public class Main {
     // Main program loop
     while(running) {
       String input = getInput(sc, "> ");
-      handleInput(input, manager, generator);
+      handleInput(input, manager, generator, sc);
     }
   }
 
@@ -52,16 +52,16 @@ public class Main {
     return sc.nextLine();
   }
 
-  static void handleInput(String input, PasswordManager manager, PasswordGenerator generator) throws Exception {
+  static void handleInput(String input, PasswordManager manager, PasswordGenerator generator, Scanner sc) throws Exception {
     String[] parts = input.split(" ");
 
     switch(parts[0]) {
       case "generate" -> generatePassword(parts, generator);
       case "add" -> addCredential(parts, manager);
-      case "update" -> updateCredential(parts, manager);
+      case "update" -> updateCredential(parts, manager, sc);
       case "get" -> getCredential(parts, manager);
       case "list" -> listServices(manager);
-      case "delete" -> deleteCredential(parts, manager);
+      case "delete" -> deleteCredential(parts, manager, sc);
       case "help" -> showHelpText(parts);
       case "quit", "exit" -> running = false;
     }
@@ -135,7 +135,7 @@ public class Main {
     }
   }
 
-  private static void updateCredential(String[] parts, PasswordManager manager) throws Exception {
+  private static void updateCredential(String[] parts, PasswordManager manager, Scanner sc) throws Exception {
     if (parts.length != 4) {
       System.out.println("Usage: update <service> <field> <newValue>");
       return;
@@ -154,7 +154,11 @@ public class Main {
         case 3 -> System.out.println("Invalid field. Choose a valid field to update.");
       }
     } else {
-      System.out.println("Updated " + parts[2] + " for service: " + parts[1]);
+      if (getConfirmation(sc, "Are you sure you want to update service " + parts[1] + "?")) {
+        System.out.println("Updated " + parts[2] + " for service: " + parts[1]);
+      } else {
+        System.out.println("Update cancelled.");
+      }
     }
   }
 
@@ -174,16 +178,20 @@ public class Main {
     }
   }
 
-  private static void deleteCredential(String[] parts, PasswordManager manager) {
+  private static void deleteCredential(String[] parts, PasswordManager manager, Scanner sc) {
     if (parts.length != 2) {
       System.out.println("Usage: delete <service>");
       return;
     }
 
-    if (manager.deleteCredential(parts[1])) {
-      System.out.println("Deleted credentials for service: " + parts[1]);
+    if (getConfirmation(sc, "Are you sure you want to delete service " + parts[1] + "?")) {
+      if (manager.deleteCredential(parts[1])) {
+        System.out.println("Deleted credentials for service: " + parts[1]);
+      } else {
+        System.out.println("No credentials found for service: " + parts[1]);
+      }
     } else {
-      System.out.println("No credentials found for service: " + parts[1]);
+      System.out.println("Delete cancelled.");
     }
   }
 
@@ -343,5 +351,11 @@ public class Main {
     }
 
     System.out.println("Master password verified successfully.");
+  }
+
+  private static boolean getConfirmation(Scanner sc, String message) {
+    System.out.print(message + " (y/n): ");
+    String response = sc.nextLine().trim().toLowerCase();
+    return response.equals("y") || response.equals("yes");
   }
 }
