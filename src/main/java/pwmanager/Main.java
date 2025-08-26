@@ -56,12 +56,12 @@ public class Main {
     String[] parts = input.split(" ");
 
     switch(parts[0]) {
-      case "generate" -> generatePassword(parts, generator);
-      case "add" -> addCredential(parts, manager);
-      case "update" -> updateCredential(parts, manager, sc);
-      case "get" -> getCredential(parts, manager);
-      case "list" -> listServices(manager);
-      case "delete" -> deleteCredential(parts, manager, sc);
+      case "generate", "gen" -> generatePassword(parts, generator);
+      case "add", "a" -> addCredential(parts, manager);
+      case "update", "u" -> updateCredential(parts, manager, sc);
+      case "get", "g" -> getCredential(parts, manager);
+      case "list", "ls" -> listServices(manager);
+      case "delete", "del" -> deleteCredential(parts, manager, sc);
       case "help" -> showHelpText(parts);
       case "quit", "exit" -> running = false;
       default -> System.out.println("Invalid command: " + parts[0] + ". Please enter a valid command.");
