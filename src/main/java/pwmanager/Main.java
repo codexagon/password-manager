@@ -64,6 +64,7 @@ public class Main {
       case "delete" -> deleteCredential(parts, manager, sc);
       case "help" -> showHelpText(parts);
       case "quit", "exit" -> running = false;
+      default -> System.out.println("Invalid command: " + parts[0] + ". Please enter a valid command.");
     }
   }
 
