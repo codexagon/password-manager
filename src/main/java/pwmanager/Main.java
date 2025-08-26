@@ -28,12 +28,10 @@ public class Main {
     */
     if (!masterPwdFile.exists()) {
       System.out.println("Master password not yet set. Please create one.");
-      System.out.print("Enter your master password: ");
-      masterPassword = getInput(sc, "");
+      masterPassword = getMasterPassword(sc);
       createMasterPassword(masterPassword);
     } else {
-      System.out.print("Enter your master password: ");
-      masterPassword = getInput(sc, "");
+      masterPassword = getMasterPassword(sc);
       verifyMasterPassword(masterPassword);
     }
 
@@ -306,6 +304,13 @@ public class Main {
     }
   }
 
+  private static boolean getConfirmation(Scanner sc, String message) {
+    System.out.print(message + " (y/n): ");
+    String response = sc.nextLine().trim().toLowerCase();
+    return response.equals("y") || response.equals("yes");
+  }
+
+  // Helper functions
   private static void createMasterPassword(String masterPassword) throws Exception {
     PasswordManager temp = new PasswordManager(masterPassword);
     String encrypted = temp.encrypt(masterPassword); // encrypt master password
@@ -354,9 +359,8 @@ public class Main {
     System.out.println("Master password verified successfully.");
   }
 
-  private static boolean getConfirmation(Scanner sc, String message) {
-    System.out.print(message + " (y/n): ");
-    String response = sc.nextLine().trim().toLowerCase();
-    return response.equals("y") || response.equals("yes");
+  private static String getMasterPassword(Scanner sc) {
+    System.out.print("Enter your master password: ");
+    return getInput(sc, "");
   }
 }
