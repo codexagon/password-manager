@@ -62,6 +62,7 @@ public class Main {
       case "get" -> getCredential(parts, manager);
       case "list" -> listServices(manager);
       case "delete" -> deleteCredential(parts, manager);
+      case "help" -> showHelpText(parts);
       case "quit", "exit" -> running = false;
     }
   }
@@ -193,6 +194,105 @@ public class Main {
     } else {
       for (String service : services) {
         System.out.println("- " + service);
+      }
+    }
+  }
+
+  private static void showHelpText(String[] parts) {
+    if (parts.length == 1) {
+      // Show a list of all commands and a one-line description
+      System.out.println(
+        """
+        Available commands:
+          generate <length> [options]           Generate a random password
+          add <service> <username> <password>   Add a new credential
+          update <service> <field> <value>      Update an existing credential
+          get <service>                         Retrieve stored credentials
+          list                                  List all services
+          delete <service>                      Deletes credentials for a service
+          help [command]                        Shows help text
+          quit | exit                           Exits the program
+        """
+      );
+    } else {
+      String command = parts[1].toLowerCase();
+      switch(command) {
+        case "generate" -> System.out.println(
+            """
+            Usage: generate <length> [-u/--uppercase] [-l/--lowercase] [-n/--numbers] [-s/--symbols]
+            Description: Generate a random password of given length.
+            
+            Options:
+              -u, --uppercase     Include uppercase letters
+              -l, --lowercase     Include lowercase letters
+              -n, --numbers       Include numbers
+              -s, --symbols       Include symbols
+            
+            Examples:
+              generate 12 -u -n
+              generate 16 --lowercase --symbols
+            
+            Note: when no options are provided all options are selected by default.
+            """
+        );
+        case "add" -> System.out.println(
+            """
+            Usage: add <service> <username> <password>
+            Description: Add a new credential.
+            
+            Example:
+              add github johndoe Password123
+            """
+        );
+        case "update" -> System.out.println(
+            """
+            Usage: update <service> <field> <newValue>
+            Description: Update credentials for a service.
+            
+            Fields:
+              username     Change the stored username
+              password     Change the stored password
+              service      Change the service name
+            
+            Example:
+              update github username janedoe
+            """
+        );
+        case "get" -> System.out.println(
+            """
+            Usage: get <service>
+            Description: Retrieve credentials for a service.
+            
+            Example:
+              get github
+            """
+        );
+        case "list" -> System.out.println(
+            """
+            Usage: list
+            Description: List all stored services.
+            """
+        );
+        case "delete" -> System.out.println(
+            """
+            Usage: delete <service>
+            Description: Delete credentials for a stored service.
+            
+            Example:
+              delete github
+            """
+        );
+        case "help" -> System.out.println(
+            """
+            Usage: help [command]
+            Description: Show general help or help for a specific command.
+            
+            Examples:
+              help
+              help update
+            """
+        );
+        default -> System.out.println("Unknown command: " + command + ". Type 'help' to see all available commands.");
       }
     }
   }
