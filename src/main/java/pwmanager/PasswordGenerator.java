@@ -35,7 +35,7 @@ public class PasswordGenerator {
     }
 
     // Build the rest of the password by choosing a random set and a random character from that set
-    for (int i = 0; i < length; i++) {
+    for (int i = 0; i < (length - characterSets.size()); i++) {
       String set = characterSets.get(random.nextInt(characterSets.size()));
       int index = random.nextInt(set.length());
       password.add(set.charAt(index));
