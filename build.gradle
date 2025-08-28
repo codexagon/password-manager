@@ -1,9 +1,14 @@
 plugins {
     id 'java'
+    id 'application'
 }
 
 group = 'pwmanager'
 version = '1.0-SNAPSHOT'
+
+application {
+    mainClass = 'pwmanager.Main'
+}
 
 repositories {
     mavenCentral()
