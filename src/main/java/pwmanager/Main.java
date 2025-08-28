@@ -172,38 +172,44 @@ public class Main {
   }
 
   private static void getCredential(String[] parts, PasswordManager manager) throws Exception {
-    if (parts.length != 2) {
-      System.out.println("Usage: get <service>");
+    if (parts.length < 2) {
+      System.out.println("Usage: get <service> [<service>...]");
       return;
     }
 
-    Credential credential = manager.getCredential(parts[1]);
-
-    if (credential == null) {
-      System.out.println("No credentials found for service: " + parts[1]);
-    } else {
-      byte[] decryptedBytes = manager.getDecryptedPassword(credential);
-      System.out.println("Username: " + credential.getUsername());
-      System.out.println("Password: " + Helpers.bytesToUtf8String(decryptedBytes));
-      Helpers.clearArray(decryptedBytes);
+    for (int i = 1; i < parts.length; i++) {
+      Credential credential = manager.getCredential(parts[i]);
+      if (credential == null) {
+        System.out.println("No credentials found for service: " + parts[i]);
+      } else {
+        System.out.println("Service: " + parts[i]);
+        byte[] decryptedBytes = manager.getDecryptedPassword(credential);
+        System.out.println("Username: " + credential.getUsername());
+        System.out.println("Password: " + Helpers.bytesToUtf8String(decryptedBytes));
+        Helpers.clearArray(decryptedBytes);
+      }
+      if (i != parts.length - 1) System.out.println();
     }
   }
 
   private static void deleteCredential(String[] parts, PasswordManager manager, Scanner sc) throws Exception {
-    if (parts.length != 2) {
-      System.out.println("Usage: delete <service>");
+    if (parts.length < 2) {
+      System.out.println("Usage: delete <service> [<service>...]");
       return;
     }
 
-    if (getConfirmation(sc, "Are you sure you want to delete service " + parts[1] + "?")) {
-      if (manager.deleteCredential(parts[1])) {
-        saveToVault(manager);
-        System.out.println("Deleted credentials for service: " + parts[1]);
+    for (int i = 1; i < parts.length; i++) {
+      if (getConfirmation(sc, "Are you sure you want to delete service " + parts[i] + "?")) {
+        if (manager.deleteCredential(parts[i])) {
+          saveToVault(manager);
+          System.out.println("Deleted credentials for service: " + parts[i]);
+        } else {
+          System.out.println("No credentials found for service: " + parts[i]);
+        }
       } else {
-        System.out.println("No credentials found for service: " + parts[1]);
+        System.out.println("Delete " + parts[i] + " cancelled.");
       }
-    } else {
-      System.out.println("Delete cancelled.");
+      if (i != parts.length - 1) System.out.println();
     }
   }
 
@@ -280,11 +286,12 @@ public class Main {
         );
         case "get" -> System.out.println(
             """
-            Usage: get <service>
-            Description: Retrieve credentials for a service.
+            Usage: get <service> [<service>...]
+            Description: Retrieve credentials for one or more services.
             
             Example:
               get github
+              get github gitlab bitbucket
             """
         );
         case "list" -> System.out.println(
@@ -295,11 +302,12 @@ public class Main {
         );
         case "delete" -> System.out.println(
             """
-            Usage: delete <service>
-            Description: Delete credentials for a stored service.
+            Usage: delete <service> [<services>...]
+            Description: Delete credentials for one or more services.
             
             Example:
               delete github
+              delete github gitlab bitbucket
             """
         );
         case "help" -> System.out.println(
