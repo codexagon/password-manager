@@ -10,6 +10,14 @@ application {
     mainClass = 'pwmanager.Main'
 }
 
+jar {
+    manifest {
+        attributes(
+            'Main-Class': application.mainClass
+        )
+    }
+}
+
 repositories {
     mavenCentral()
 }
