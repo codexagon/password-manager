@@ -4,6 +4,7 @@ import utils.FileHelper;
 import utils.Helpers;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
@@ -339,9 +340,9 @@ public class Main {
     File dir = new File(System.getProperty("user.home"), ".password-manager");
     File masterFile = new File(dir, "master.dat");
 
-    // Write the encrypted master password to master.dat
-    try (BufferedWriter writer = FileHelper.getWriter(masterFile)) {
-      writer.write(Base64.getEncoder().encodeToString(encrypted));
+    // Write the encrypted master password bytes to master.dat
+    try (FileOutputStream fos = new FileOutputStream(masterFile)) {
+      fos.write(encrypted);
     }
 
     Helpers.clearArray(encrypted);
@@ -360,12 +361,8 @@ public class Main {
       return;
     }
 
-    // Read the encrypted master password as a base64 string, then decode it into bytes
-    String base64;
-    try (BufferedReader reader = FileHelper.getReader(masterPwdFile)) {
-      base64 = reader.readLine();
-    }
-    byte[] encrypted = Base64.getDecoder().decode(base64);
+    // Read the encrypted master password bytes
+    byte[] encrypted = Files.readAllBytes(masterPwdFile.toPath());
 
     // Decrypt the encrypted master password and check if it matches the entered password
     byte[] decrypted = null;
