@@ -361,15 +361,15 @@ public class Main {
       decrypted = temp.decrypt(encrypted);
       if (!Arrays.equals(decrypted, masterPassword)) {
         System.out.println("Incorrect master password. Exiting...");
+        if (decrypted != null) Helpers.clearArray(decrypted);
+        Helpers.clearArray(encrypted);
         System.exit(0);
       }
     } catch (Exception e) {
       System.out.println("Incorrect master password. Exiting...");
-      System.exit(0);
-    } finally {
       if (decrypted != null) Helpers.clearArray(decrypted);
       Helpers.clearArray(encrypted);
-      Helpers.clearArray(masterPassword);
+      System.exit(0);
     }
 
     System.out.println("Master password verified successfully.");
