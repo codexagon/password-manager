@@ -1,12 +1,10 @@
 package pwmanager;
 
-import utils.FileHelper;
 import utils.Helpers;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.List;
 import java.util.Scanner;
 
@@ -15,7 +13,7 @@ public class Main {
 
   public static void main(String[] args) throws Exception {
     Scanner sc = new Scanner(System.in);
-    byte[] masterPassword;
+    char[] masterPassword;
 
     // Create .password-manager directory and check if it's created properly
     File dir = new File(System.getProperty("user.home"), ".password-manager");
@@ -23,8 +21,10 @@ public class Main {
       throw new IOException("Failed to create directory " + dir.getAbsolutePath());
     }
 
-    // Create master password file
+    // Create master password, vault, salt file
     File masterPwdFile = new File(dir, "master.dat");
+    File vaultFile = new File(dir, "vault.dat");
+    File saltFile = new File(dir, "vault.salt");
 
     /* 
      - If master password file doesn't exist, prompt user to create a master password
@@ -33,17 +33,16 @@ public class Main {
     if (!masterPwdFile.exists()) {
       System.out.println("Master password not yet set. Please create one.");
       masterPassword = getMasterPassword(sc);
-      createMasterPassword(masterPassword);
+      createMasterPassword(masterPassword, masterPwdFile, saltFile);
     } else {
       masterPassword = getMasterPassword(sc);
-      verifyMasterPassword(masterPassword);
+      verifyMasterPassword(masterPassword, masterPwdFile, saltFile);
     }
 
-    PasswordManager manager = new PasswordManager(masterPassword);
+    PasswordManager manager = new PasswordManager(masterPassword, saltFile);
     PasswordGenerator generator = new PasswordGenerator();
     Helpers.clearArray(masterPassword);
 
-    File vaultFile = new File(dir, "vault.dat");
     manager.loadFromVault(vaultFile);
 
     // Main program loop
@@ -332,28 +331,27 @@ public class Main {
     return response.equals("y") || response.equals("yes");
   }
 
-  private static void createMasterPassword(byte[] masterPassword) throws Exception {
-    PasswordManager temp = new PasswordManager(masterPassword);
-    byte[] encrypted = temp.encrypt(masterPassword); // encrypt master password
+  private static void createMasterPassword(char[] masterPassword, File masterPwdFile, File saltFile) throws Exception {
+    PasswordManager temp = new PasswordManager(masterPassword, saltFile);
 
-    // Create master.dat file
-    File dir = new File(System.getProperty("user.home"), ".password-manager");
-    File masterFile = new File(dir, "master.dat");
+    // Convert char[] to byte[] for encryption
+    byte[] masterBytes = Helpers.utf8StringToBytes(new String(masterPassword));
+    byte[] encrypted = temp.encrypt(masterBytes);
 
     // Write the encrypted master password bytes to master.dat
-    try (FileOutputStream fos = new FileOutputStream(masterFile)) {
+    try (FileOutputStream fos = new FileOutputStream(masterPwdFile)) {
       fos.write(encrypted);
     }
 
+    // Clear sensitive arrays
+    Helpers.clearArray(masterBytes);
     Helpers.clearArray(encrypted);
 
     System.out.println("Master password set successfully.");
   }
 
-  private static void verifyMasterPassword(byte[] masterPassword) throws Exception {
-    PasswordManager temp = new PasswordManager(masterPassword);
-    File dir = new File(System.getProperty("user.home"), ".password-manager");
-    File masterPwdFile = new File(dir, "master.dat");
+  private static void verifyMasterPassword(char[] masterPassword, File masterPwdFile, File saltFile) throws Exception {
+    PasswordManager temp = new PasswordManager(masterPassword, saltFile);
 
     // Check if master.dat file exists
     if (!masterPwdFile.exists()) {
@@ -368,12 +366,15 @@ public class Main {
     byte[] decrypted = null;
     try {
       decrypted = temp.decrypt(encrypted);
-      if (!Arrays.equals(decrypted, masterPassword)) {
+      byte[] masterBytes = Helpers.utf8StringToBytes(new String(masterPassword));
+      if (!Arrays.equals(decrypted, masterBytes)) {
         System.out.println("Incorrect master password. Exiting...");
         if (decrypted != null) Helpers.clearArray(decrypted);
+        Helpers.clearArray(masterBytes);
         Helpers.clearArray(encrypted);
         System.exit(0);
       }
+      Helpers.clearArray(masterBytes);
     } catch (Exception e) {
       System.out.println("Incorrect master password. Exiting...");
       if (decrypted != null) Helpers.clearArray(decrypted);
@@ -392,8 +393,8 @@ public class Main {
   }
 
   // Helper functions
-  private static byte[] getMasterPassword(Scanner sc) {
+  private static char[] getMasterPassword(Scanner sc) {
     System.out.print("Enter your master password: ");
-    return Helpers.utf8StringToBytes(getInput(sc, ""));
+    return getInput(sc, "").toCharArray();
   }
 }

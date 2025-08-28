@@ -3,32 +3,57 @@ package pwmanager;
 import utils.Helpers;
 
 import javax.crypto.Cipher;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.nio.file.Files;
-import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.security.spec.KeySpec;
 import java.util.*;
 
 public class PasswordManager {
   private Map<String, Credential> passwords = new HashMap<>();
   private SecretKeySpec secretKey;
 
-  public PasswordManager(byte[] masterPassword) throws Exception {
-    secretKey = getSecretKey(masterPassword);
+  // Constants
+  private static final int SALT_LENGTH = 16;     // 16 bytes = 128 bits
+  private static final int ITERATIONS = 100_000; // PBKDF2 iterations
+  private static final int KEY_LENGTH = 256;     // 256-bit AES key
+  private static final int GCM_IV_LENGTH = 12;   // 12 bytes recommended for GCM
+  private static final int GCM_TAG_LENGTH = 128; // 128-bit auth tag
+
+  public PasswordManager(char[] masterPassword, File saltFile) throws Exception {
+    byte[] salt;
+    if (saltFile.exists()) {
+      // If salt file already exists, read its contents
+      salt = Files.readAllBytes(saltFile.toPath());
+    } else {
+      // If salt file doesn't exist, generate a new random salt
+      salt = new byte[SALT_LENGTH];
+      new SecureRandom().nextBytes(salt);
+
+      // Save the salt file so that it can be used later
+      try (FileOutputStream fos = new FileOutputStream(saltFile)) {
+        fos.write(salt);
+      }
+    }
+
+    // Derive AES key from master password and salt
+    secretKey = getSecretKey(masterPassword, salt);
   }
 
-  public SecretKeySpec getSecretKey(byte[] masterPassword) throws Exception {
-    // Create a new MessageDigest object (for computing hashes) and define the hashing algorithm to be used
-    MessageDigest sha = MessageDigest.getInstance("SHA-256");
-
-    // Store the master password in a byte array and run SHA-256 on the bytes
-    byte[] key = sha.digest(masterPassword);
-
-    // Use the first 16 bytes of the hashed password as the AES key
-    byte[] key16 = new byte[16];
-    System.arraycopy(key, 0, key16, 0, 16);
-    Helpers.clearArray(key);
-    return new SecretKeySpec(key16, "AES");
+  public SecretKeySpec getSecretKey(char[] masterPassword, byte[] salt) throws Exception {
+    /*
+     - PBKDF2: Password-Based Key Derivation Function 2
+     - HMAC: Hash-based Message Authentication Code
+     - SHA256: Hashing algorithm
+    */
+    SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+    KeySpec spec = new PBEKeySpec(masterPassword, salt, ITERATIONS, KEY_LENGTH);
+    byte[] keyBytes = factory.generateSecret(spec).getEncoded();
+    return new SecretKeySpec(keyBytes, "AES");
   }
 
   public Credential addCredential(String service, String username, String password) throws Exception {
@@ -101,33 +126,47 @@ public class PasswordManager {
   }
 
   public byte[] encrypt(byte[] plaintextBytes) throws Exception {
-    /* 
-     - Create a new Cipher object (for handling encryption/decryption)
-     - Use AES as encryption algorithm, use ECB (Electronic Codebook) mode
-     - Use PKCS5Padding to ensure plaintext length fits AES block sizes by adding padding if required
-    */
-    Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+    // Initialize AES cipher in GCM mode with no padding
+    Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
 
-    // Set the cipher to encrypt mode and provide the secret key for encryption
-    cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+    // Generate a new random IV (initialization vector) for this encryption
+    byte[] iv = new byte[GCM_IV_LENGTH];
+    new SecureRandom().nextBytes(iv);
 
-    // Convert the plaintext to raw bytes, run AES on the bytes, convert the resulting ciphertext bytes to a readable string
-    return cipher.doFinal(plaintextBytes);
+    // GCM requires both an IV and tag length (authentication tag)
+    GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
+
+    // Initialize the cipher to encrypt mode and provide the secret key and IV
+    cipher.init(Cipher.ENCRYPT_MODE, secretKey, spec);
+
+    // Encrypt the plaintext into ciphertext
+    byte[] ciphertext = cipher.doFinal(plaintextBytes);
+
+    // Prepend IV so that we can extract it during decryption
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    baos.write(iv);
+    baos.write(ciphertext);
+
+    // Return full byte array (IV + ciphertextBytes)
+    return baos.toByteArray();
   }
 
   public byte[] decrypt(byte[] ciphertextBytes) throws Exception {
-    /* 
-     - Create a new Cipher object (for handling encryption/decryption)
-     - Use AES as encryption algorithm, use ECB (Electronic Codebook) mode
-     - Use PKCS5Padding to ensure plaintext length fits AES block sizes by adding padding if required
-    */
-    Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+    // Initialize AES cipher in GCM mode with no padding
+    Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
 
-    // Set the cipher to decrypt mode and provide the secret key for decryption
-    cipher.init(Cipher.DECRYPT_MODE, secretKey);
+    // Extract IV (first 12 bytes) and ciphertext
+    byte[] iv = Arrays.copyOfRange(ciphertextBytes, 0, GCM_IV_LENGTH);
+    byte[] ciphertext = Arrays.copyOfRange(ciphertextBytes, GCM_IV_LENGTH, ciphertextBytes.length);
 
-    // Convert the ciphertext to raw bytes, run AES on the bytes, convert the resulting plaintext bytes to a readable string
-    return cipher.doFinal(ciphertextBytes);
+    // GCM requires IV and tag length to verify integrity
+    GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
+
+    // Initialize the cipher in decrypt mode and provide the same key and IV
+    cipher.init(Cipher.DECRYPT_MODE, secretKey, spec);
+
+    // Decrypt ciphertext into plaintext
+    return cipher.doFinal(ciphertext);
   }
 
   public void saveToVault(File vaultFile) throws Exception {
