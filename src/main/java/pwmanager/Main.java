@@ -40,9 +40,10 @@ public class Main {
 
     PasswordManager manager = new PasswordManager(masterPassword);
     PasswordGenerator generator = new PasswordGenerator();
-
     Helpers.clearArray(masterPassword);
-    masterPassword = null;
+
+    File vaultFile = new File(dir, "vault.dat");
+    manager.loadFromVault(vaultFile);
 
     // Main program loop
     while(running) {
@@ -136,6 +137,7 @@ public class Main {
     if (old != null) {
       System.out.println("Credentials for service: " + parts[1] + " already exists. Use update instead.");
     } else {
+      saveToVault(manager);
       System.out.println("Added new password for service: " + parts[1]);
     }
   }
@@ -160,6 +162,7 @@ public class Main {
       }
     } else {
       if (getConfirmation(sc, "Are you sure you want to update service " + parts[1] + "?")) {
+        saveToVault(manager);
         System.out.println("Updated " + parts[2] + " for service: " + parts[1]);
       } else {
         System.out.println("Update cancelled.");
@@ -185,7 +188,7 @@ public class Main {
     }
   }
 
-  private static void deleteCredential(String[] parts, PasswordManager manager, Scanner sc) {
+  private static void deleteCredential(String[] parts, PasswordManager manager, Scanner sc) throws Exception {
     if (parts.length != 2) {
       System.out.println("Usage: delete <service>");
       return;
@@ -193,6 +196,7 @@ public class Main {
 
     if (getConfirmation(sc, "Are you sure you want to delete service " + parts[1] + "?")) {
       if (manager.deleteCredential(parts[1])) {
+        saveToVault(manager);
         System.out.println("Deleted credentials for service: " + parts[1]);
       } else {
         System.out.println("No credentials found for service: " + parts[1]);
@@ -318,7 +322,6 @@ public class Main {
     return response.equals("y") || response.equals("yes");
   }
 
-  // Helper functions
   private static void createMasterPassword(byte[] masterPassword) throws Exception {
     PasswordManager temp = new PasswordManager(masterPassword);
     byte[] encrypted = temp.encrypt(masterPassword); // encrypt master password
@@ -375,6 +378,14 @@ public class Main {
     System.out.println("Master password verified successfully.");
   }
 
+  private static void saveToVault(PasswordManager manager) throws Exception {
+    File vaultFile = new File(System.getProperty("user.home"), ".password-manager/vault.dat");
+
+    manager.saveToVault(vaultFile);
+    System.out.println("Changes saved.");
+  }
+
+  // Helper functions
   private static byte[] getMasterPassword(Scanner sc) {
     System.out.print("Enter your master password: ");
     return Helpers.utf8StringToBytes(getInput(sc, ""));

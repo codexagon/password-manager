@@ -4,6 +4,8 @@ import utils.Helpers;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.*;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.util.*;
 
@@ -126,5 +128,51 @@ public class PasswordManager {
 
     // Convert the ciphertext to raw bytes, run AES on the bytes, convert the resulting plaintext bytes to a readable string
     return cipher.doFinal(ciphertextBytes);
+  }
+
+  public void saveToVault(File vaultFile) throws Exception {
+    // Build the file content
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+    for (Map.Entry<String, Credential> entry : passwords.entrySet()) {
+      Credential credential = entry.getValue();
+      String line = entry.getKey() + "||" + credential.getUsername() + "||" + credential.getPassword() + "\n";
+      baos.write(Helpers.utf8StringToBytes(line));
+    }
+
+    // Convert to byte array and encrypt it
+    byte[] encrypted = encrypt(baos.toByteArray());
+
+    // Write encrypted bytes to file
+    try (FileOutputStream fos = new FileOutputStream(vaultFile)) {
+      fos.write(encrypted);
+    }
+  }
+
+  public void loadFromVault(File vaultFile) throws Exception {
+    if (!vaultFile.exists()) {
+      System.out.println("Error: vault file does not exist.");
+      return;
+    }
+
+    // Read encrypted bytes to memory
+    byte[] encrypted = Files.readAllBytes(vaultFile.toPath());
+
+    // Decrypt the encrypted bytes
+    byte[] decryptedBytes = decrypt(encrypted);
+
+    // Convert bytes to UTF-8 string
+    String vaultContent = Helpers.bytesToUtf8String(decryptedBytes);
+
+    // Parse lines and populate passwords HashMap
+    passwords.clear(); // clear HashMap
+    for (String line : vaultContent.split("\\R")) {
+      if (line.isBlank()) continue;
+
+      String[] parts = line.split("\\|\\|");
+      if (parts.length != 3) continue;
+
+      passwords.put(parts[0], new Credential(parts[1], parts[2]));
+    }
   }
 }
