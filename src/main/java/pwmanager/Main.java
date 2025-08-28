@@ -148,9 +148,9 @@ public class Main {
       return;
     }
 
-    int updatedStatus = manager.updateCredential(parts[1], parts[2], parts[3]);
-    if (updatedStatus != 0) {
-      switch (updatedStatus) {
+    int updateStatus = manager.canUpdateCredential(parts[1], parts[2], parts[3]);
+    if (updateStatus != 0) {
+      switch (updateStatus) {
         // 1: service does not exist in saved services
         case 1 -> System.out.println("Service: " + parts[1] + " does not exist. Use add instead.");
 
@@ -162,6 +162,7 @@ public class Main {
       }
     } else {
       if (getConfirmation(sc, "Are you sure you want to update service " + parts[1] + "?")) {
+        manager.updateCredential(parts[1], parts[2], parts[3]);
         saveToVault(manager);
         System.out.println("Updated " + parts[2] + " for service: " + parts[1]);
       } else {

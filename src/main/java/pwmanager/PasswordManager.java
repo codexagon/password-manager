@@ -45,11 +45,16 @@ public class PasswordManager {
     return passwords.put(service, new Credential(username, encryptedStr));
   }
 
-  public int updateCredential(String service, String field, String newValue) throws Exception {
-    if (!passwords.containsKey(service)) {
-      return 1;
+  public int canUpdateCredential(String service, String field, String newValue) {
+    if (!passwords.containsKey(service)) return 1;
+    if (field.equals("service")) {
+      if (passwords.containsKey(newValue)) return 2;
     }
+    if (!field.equals("username") && !field.equals("password") && !field.equals("service")) return 3;
+    return 0;
+  }
 
+  public void updateCredential(String service, String field, String newValue) throws Exception {
     Credential oldCredentials = passwords.get(service);
     switch(field) {
       case "username" -> passwords.put(service, new Credential(newValue, oldCredentials.getPassword()));
@@ -66,15 +71,10 @@ public class PasswordManager {
         passwords.put(service, new Credential(oldCredentials.getUsername(), encryptedStr));
       }
       case "service" -> {
-        if (passwords.containsKey(newValue)) return 2;
         passwords.remove(service);
         passwords.put(newValue, oldCredentials);
       }
-      default -> {
-        return 3;
-      }
     }
-    return 0;
   }
 
   public Credential getCredential(String service) {
