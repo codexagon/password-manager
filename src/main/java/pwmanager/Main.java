@@ -1,8 +1,11 @@
 package pwmanager;
 
 import utils.FileHelper;
+import utils.Helpers;
 
 import java.io.*;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.Scanner;
 
@@ -11,7 +14,7 @@ public class Main {
 
   public static void main(String[] args) throws Exception {
     Scanner sc = new Scanner(System.in);
-    String masterPassword;
+    byte[] masterPassword;
 
     // Create .password-manager directory and check if it's created properly
     File dir = new File(System.getProperty("user.home"), ".password-manager");
@@ -37,6 +40,9 @@ public class Main {
 
     PasswordManager manager = new PasswordManager(masterPassword);
     PasswordGenerator generator = new PasswordGenerator();
+
+    Helpers.clearArray(masterPassword);
+    masterPassword = null;
 
     // Main program loop
     while(running) {
@@ -172,8 +178,10 @@ public class Main {
     if (credential == null) {
       System.out.println("No credentials found for service: " + parts[1]);
     } else {
+      byte[] decryptedBytes = manager.getDecryptedPassword(credential);
       System.out.println("Username: " + credential.getUsername());
-      System.out.println("Password: " + manager.getDecryptedPassword(credential));
+      System.out.println("Password: " + Helpers.bytesToUtf8String(decryptedBytes));
+      Helpers.clearArray(decryptedBytes);
     }
   }
 
@@ -311,9 +319,9 @@ public class Main {
   }
 
   // Helper functions
-  private static void createMasterPassword(String masterPassword) throws Exception {
+  private static void createMasterPassword(byte[] masterPassword) throws Exception {
     PasswordManager temp = new PasswordManager(masterPassword);
-    String encrypted = temp.encrypt(masterPassword); // encrypt master password
+    byte[] encrypted = temp.encrypt(masterPassword); // encrypt master password
 
     // Create master.dat file
     File dir = new File(System.getProperty("user.home"), ".password-manager");
@@ -321,13 +329,15 @@ public class Main {
 
     // Write the encrypted master password to master.dat
     try (BufferedWriter writer = FileHelper.getWriter(masterFile)) {
-      writer.write(encrypted);
+      writer.write(Base64.getEncoder().encodeToString(encrypted));
     }
+
+    Helpers.clearArray(encrypted);
 
     System.out.println("Master password set successfully.");
   }
 
-  private static void verifyMasterPassword(String masterPassword) throws Exception {
+  private static void verifyMasterPassword(byte[] masterPassword) throws Exception {
     PasswordManager temp = new PasswordManager(masterPassword);
     File dir = new File(System.getProperty("user.home"), ".password-manager");
     File masterPwdFile = new File(dir, "master.dat");
@@ -338,29 +348,35 @@ public class Main {
       return;
     }
 
-    // Read the encrypted master password
-    String encrypted;
+    // Read the encrypted master password as a base64 string, then decode it into bytes
+    String base64;
     try (BufferedReader reader = FileHelper.getReader(masterPwdFile)) {
-      encrypted = reader.readLine();
+      base64 = reader.readLine();
     }
+    byte[] encrypted = Base64.getDecoder().decode(base64);
 
     // Decrypt the encrypted master password and check if it matches the entered password
+    byte[] decrypted = null;
     try {
-      String decrypted = temp.decrypt(encrypted);
-      if (!decrypted.equals(masterPassword)) {
+      decrypted = temp.decrypt(encrypted);
+      if (!Arrays.equals(decrypted, masterPassword)) {
         System.out.println("Incorrect master password. Exiting...");
         System.exit(0);
       }
     } catch (Exception e) {
       System.out.println("Incorrect master password. Exiting...");
       System.exit(0);
+    } finally {
+      if (decrypted != null) Helpers.clearArray(decrypted);
+      Helpers.clearArray(encrypted);
+      Helpers.clearArray(masterPassword);
     }
 
     System.out.println("Master password verified successfully.");
   }
 
-  private static String getMasterPassword(Scanner sc) {
+  private static byte[] getMasterPassword(Scanner sc) {
     System.out.print("Enter your master password: ");
-    return getInput(sc, "");
+    return Helpers.utf8StringToBytes(getInput(sc, ""));
   }
 }
