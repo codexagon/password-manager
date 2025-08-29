@@ -65,7 +65,7 @@ public class Main {
       case "add", "a" -> addCredential(parts, manager);
       case "update", "u" -> updateCredential(parts, manager, sc);
       case "get", "g" -> getCredential(parts, manager);
-      case "list", "ls" -> listServices(parts, manager);
+      case "list", "ls" -> listServices(parts, manager.listServices());
       case "delete", "del" -> deleteCredential(parts, manager, sc);
       case "help" -> showHelpText(parts);
       case "quit", "exit" -> running = false;
@@ -225,8 +225,7 @@ public class Main {
     }
   }
 
-  private static void listServices(String[] parts, PasswordManager manager) {
-    List<String> services = manager.listServices();
+  private static void listServices(String[] parts, List<String> services) {
     if (services.isEmpty()) {
       System.out.println("No services stored.");
       return;
@@ -237,24 +236,28 @@ public class Main {
 
     System.out.println("Total " + services.size());
 
-    // Handle flags
-    boolean numbered = false, compact = false;
+    // Loop through command and set flags
+    boolean numbered = false, longList = false;
 
-    // Whichever flag is provided first will be considered since both are mutually exclusive
-    if (parts.length > 1) {
-      if (parts[1].equals("--numbered") || parts[1].equals("-n")) {
+    for (String part : parts) {
+      if (part.equals("--numbered") || part.equals("-n")) {
         numbered = true;
-      } else if (parts[1].equals("--compact") || parts[1].equals("-c")) {
-        compact = true;
+      } else if (part.equals("--long") || part.equals("-l")) {
+        longList = true;
       }
     }
 
-    // Print list according to first provided flag
+    // Print list according to provided flags
     if (numbered) {
       for (int i = 0; i < services.size(); i++) {
         System.out.println(" " + (i + 1) + ". " + services.get(i));
       }
-    } else if (compact) {
+    } else if (longList) {
+      for (String service : services) {
+        System.out.println(" - " + service);
+      }
+    } else {
+      // Compact listing
       // Find the maximum length of a service and add padding
       int maxLength = services.stream().mapToInt(String::length).max().orElse(0) + 4;
 
@@ -264,10 +267,6 @@ public class Main {
         if ((i + 1) % 6 == 0 || i == services.size() - 1) {
           System.out.print('\n');
         }
-      }
-    } else {
-      for (String service : services) {
-        System.out.println(" - " + service);
       }
     }
   }
