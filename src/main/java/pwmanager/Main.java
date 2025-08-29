@@ -65,7 +65,7 @@ public class Main {
       case "add", "a" -> addCredential(parts, manager);
       case "update", "u" -> updateCredential(parts, manager, sc);
       case "get", "g" -> getCredential(parts, manager);
-      case "list", "ls" -> listServices(manager);
+      case "list", "ls" -> listServices(parts, manager);
       case "delete", "del" -> deleteCredential(parts, manager, sc);
       case "help" -> showHelpText(parts);
       case "quit", "exit" -> running = false;
@@ -225,13 +225,49 @@ public class Main {
     }
   }
 
-  private static void listServices(PasswordManager manager) {
+  private static void listServices(String[] parts, PasswordManager manager) {
     List<String> services = manager.listServices();
     if (services.isEmpty()) {
-      System.out.println("No services stored");
+      System.out.println("No services stored.");
+      return;
+    }
+
+    // Sort alphabetically
+    services.sort(String::compareToIgnoreCase);
+
+    System.out.println("Total " + services.size());
+
+    // Handle flags
+    boolean numbered = false, compact = false;
+
+    // Whichever flag is provided first will be considered since both are mutually exclusive
+    if (parts.length > 1) {
+      if (parts[1].equals("--numbered") || parts[1].equals("-n")) {
+        numbered = true;
+      } else if (parts[1].equals("--compact") || parts[1].equals("-c")) {
+        compact = true;
+      }
+    }
+
+    // Print list according to first provided flag
+    if (numbered) {
+      for (int i = 0; i < services.size(); i++) {
+        System.out.println(" " + (i + 1) + ". " + services.get(i));
+      }
+    } else if (compact) {
+      // Find the maximum length of a service and add padding
+      int maxLength = services.stream().mapToInt(String::length).max().orElse(0) + 4;
+
+      // Set the width of each service to be the max length + padding
+      for (int i = 0; i < services.size(); i++) {
+        System.out.format("%-" + maxLength + "s", services.get(i));
+        if ((i + 1) % 6 == 0 || i == services.size() - 1) {
+          System.out.print('\n');
+        }
+      }
     } else {
       for (String service : services) {
-        System.out.println("- " + service);
+        System.out.println(" - " + service);
       }
     }
   }
