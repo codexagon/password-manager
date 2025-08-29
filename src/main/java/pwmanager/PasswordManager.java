@@ -25,6 +25,9 @@ public class PasswordManager {
   private static final int GCM_IV_LENGTH = 12;   // 12 bytes recommended for GCM
   private static final int GCM_TAG_LENGTH = 128; // 128-bit auth tag
 
+  private static final String ENTRY_SEPARATOR = "\\|\\|";
+  private static final String NEWLINE = "\\R";
+
   public PasswordManager(char[] masterPassword, File saltFile) throws Exception {
     if (saltFile.exists()) {
       // If salt file already exists, read its contents
@@ -150,10 +153,16 @@ public class PasswordManager {
     // Encrypt the plaintext into ciphertext
     byte[] ciphertext = cipher.doFinal(plaintextBytes);
 
+    // Clear the plaintext bytes
+    Helpers.clearArray(plaintextBytes);
+
     // Prepend IV so that we can extract it during decryption
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     baos.write(iv);
     baos.write(ciphertext);
+
+    // Clear the ciphertext bytes
+    Helpers.clearArray(ciphertext);
 
     // Return full byte array (IV + ciphertextBytes)
     return baos.toByteArray();
@@ -194,11 +203,15 @@ public class PasswordManager {
     try (FileOutputStream fos = new FileOutputStream(vaultFile)) {
       fos.write(encrypted);
     }
+
+    // Clear byte arrays
+    Helpers.clearArray(encrypted);
+    baos.close();
   }
 
   public void loadFromVault(File vaultFile) throws Exception {
     if (!vaultFile.exists()) {
-      System.out.println("Error: vault file does not exist.");
+      System.out.println("No existing vault found. Starting fresh.");
       return;
     }
 
@@ -211,13 +224,22 @@ public class PasswordManager {
     // Convert bytes to UTF-8 string
     String vaultContent = Helpers.bytesToUtf8String(decryptedBytes);
 
+    // Clear byte arrays
+    Helpers.clearArray(encrypted);
+    Helpers.clearArray(decryptedBytes);
+
     // Parse lines and populate passwords HashMap
     passwords.clear(); // clear HashMap
-    for (String line : vaultContent.split("\\R")) {
+    int lineNumber = 0;
+    for (String line : vaultContent.split(NEWLINE)) {
       if (line.isBlank()) continue;
+      lineNumber++; // keep track of line number
 
-      String[] parts = line.split("\\|\\|");
-      if (parts.length != 3) continue;
+      String[] parts = line.split(ENTRY_SEPARATOR);
+      if (parts.length != 3) {
+        System.out.println("Warning: skipping malformed line " + (lineNumber) + " in vault");
+        continue;
+      }
 
       passwords.put(parts[0], new Credential(parts[1], parts[2]));
     }

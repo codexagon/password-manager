@@ -33,10 +33,12 @@ public class Main {
     */
     if (!masterPwdFile.exists()) {
       System.out.println("Master password not yet set. Please create one.");
-      masterPassword = getMasterPassword(sc);
+      masterPassword = getPassword("Enter your master password: ");
+      if (masterPassword == null) return;
       createMasterPassword(masterPassword, masterPwdFile, saltFile);
     } else {
-      masterPassword = getMasterPassword(sc);
+      masterPassword = getPassword("Enter your master password: ");
+      if (masterPassword == null) return;
       verifyMasterPassword(masterPassword, masterPwdFile, saltFile);
     }
 
@@ -139,18 +141,19 @@ public class Main {
     }
 
     // Generate a password and add it directly
+    String password = parts[3];
     if (parts[3].equals("--generate")) {
       String[] passwordOptions = Arrays.copyOfRange(parts, 3, parts.length);
-      parts[3] = generatePassword(passwordOptions);
+      password = generatePassword(passwordOptions);
     }
 
     // If password generation fails due to incorrect inputs
-    if (parts[3] == null) {
+    if (password == null) {
       System.out.println("Failed to generate password.");
       return;
     }
 
-    Credential old = manager.addCredential(parts[1], parts[2], parts[3]);
+    Credential old = manager.addCredential(parts[1], parts[2], password);
     if (old != null) {
       System.out.println("Credentials for service: " + parts[1] + " already exists. Use update instead.");
     } else {
@@ -440,17 +443,13 @@ public class Main {
   }
 
   // Helper functions
-  private static char[] getMasterPassword(Scanner sc) {
-    return getPassword("Enter your master password: ", sc);
-  }
-
-  private static char[] getPassword(String message, Scanner sc) {
+  private static char[] getPassword(String message) {
     Console console = System.console();
     if (console != null) {
       return console.readPassword(message);
     } else {
-      System.out.print(message);
-      return getInput(sc, "").toCharArray();
+      System.out.println("Error: console is unavailable. Please run in a real terminal.");
+      return null;
     }
   }
 }
