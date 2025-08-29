@@ -394,7 +394,16 @@ public class Main {
 
   // Helper functions
   private static char[] getMasterPassword(Scanner sc) {
-    System.out.print("Enter your master password: ");
-    return getInput(sc, "").toCharArray();
+    return getPassword("Enter your master password: ", sc);
+  }
+
+  private static char[] getPassword(String message, Scanner sc) {
+    Console console = System.console();
+    if (console != null) {
+      return console.readPassword(message);
+    } else {
+      System.out.print(message);
+      return getInput(sc, "").toCharArray();
+    }
   }
 }
