@@ -41,7 +41,6 @@ public class Main {
     }
 
     PasswordManager manager = new PasswordManager(masterPassword, saltFile);
-    PasswordGenerator generator = new PasswordGenerator();
     Helpers.clearArray(masterPassword);
 
     manager.loadFromVault(vaultFile);
@@ -49,7 +48,7 @@ public class Main {
     // Main program loop
     while(running) {
       String input = getInput(sc, "> ");
-      handleInput(input, manager, generator, sc);
+      handleInput(input, manager, sc);
     }
   }
 
@@ -58,11 +57,11 @@ public class Main {
     return sc.nextLine();
   }
 
-  static void handleInput(String input, PasswordManager manager, PasswordGenerator generator, Scanner sc) throws Exception {
+  static void handleInput(String input, PasswordManager manager, Scanner sc) throws Exception {
     String[] parts = input.split(" ");
 
     switch(parts[0]) {
-      case "generate", "gen" -> generatePassword(parts, generator);
+      case "generate", "gen" -> System.out.println(generatePassword(parts));
       case "add", "a" -> addCredential(parts, manager);
       case "update", "u" -> updateCredential(parts, manager, sc);
       case "get", "g" -> getCredential(parts, manager);
@@ -74,11 +73,11 @@ public class Main {
     }
   }
 
-  private static void generatePassword(String[] parts, PasswordGenerator generator) {
+  private static String generatePassword(String[] parts) {
     if (parts.length < 2) {
       System.out.println("Usage: generate <length> [-u/--uppercase] [-l/--lowercase] [-n/--numbers] [-s/--symbols]");
       System.out.println("Default: all character sets enabled");
-      return;
+      return null;
     }
 
     int length;
@@ -86,16 +85,16 @@ public class Main {
       if (parts[1].equals("--help") || parts[1].equals("-h")) {
         System.out.println("Usage: generate <length> [-u/--uppercase] [-l/--lowercase] [-n/--numbers] [-s/--symbols]");
         System.out.println("Default: all character sets enabled");
-        return;
+        return null;
       }
       length = Integer.parseInt(parts[1]);
       if (length <= 0) {
         System.out.println("Password length must be greater than 0.");
-        return;
+        return null;
       }
     } catch (NumberFormatException nfe) {
       System.out.println("Password length must be a number.");
-      return;
+      return null;
     }
 
     boolean upperChoice = true, lowerChoice = true, numbersChoice = true, symbolsChoice = true;
@@ -114,7 +113,7 @@ public class Main {
           case "-s", "--symbols" -> symbolsChoice = true;
           default -> {
             System.out.println("Unknown option " + parts[i]);
-            return;
+            return null;
           }
         }
       }
@@ -122,15 +121,27 @@ public class Main {
 
     if (!upperChoice && !lowerChoice && !numbersChoice && !symbolsChoice) {
       System.out.println("Error: At least one character set must be enabled.");
-      return;
+      return null;
     }
 
-    System.out.println("Password: " + generator.generatePassword(length, upperChoice, lowerChoice, numbersChoice, symbolsChoice));
+    return PasswordGenerator.generatePassword(length, upperChoice, lowerChoice, numbersChoice, symbolsChoice);
   }
 
   private static void addCredential(String[] parts, PasswordManager manager) throws Exception {
-    if (parts.length != 4) {
+    if (parts.length < 4) {
       System.out.println("Usage: add <service> <username> <password>");
+      return;
+    }
+
+    // Generate a password and add it directly
+    if (parts[3].equals("--generate")) {
+      String[] passwordOptions = Arrays.copyOfRange(parts, 3, parts.length);
+      parts[3] = generatePassword(passwordOptions);
+    }
+
+    // If password generation fails due to incorrect inputs
+    if (parts[3] == null) {
+      System.out.println("Failed to generate password.");
       return;
     }
 

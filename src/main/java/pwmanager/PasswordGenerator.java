@@ -12,9 +12,9 @@ public class PasswordGenerator {
   private static final String NUMBERS = "0123456789";
   private static final String SYMBOLS = "!@#$%^&*()-_=+[]{};:,.<>?";
 
-  private SecureRandom random = new SecureRandom();
+  private static SecureRandom random = new SecureRandom();
 
-  public String generatePassword(int length, boolean useUpper, boolean useLower, boolean useNumbers, boolean useSymbols) {
+  public static String generatePassword(int length, boolean useUpper, boolean useLower, boolean useNumbers, boolean useSymbols) {
     List<String> characterSets = new ArrayList<>();
 
     // Add character sets to the list according to user preferences
