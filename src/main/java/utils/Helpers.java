@@ -26,8 +26,4 @@ public class Helpers {
   public static void clearArray(byte[] bytes) {
     Arrays.fill(bytes, (byte) 0);
   }
-
-  public static void clearArray(char[] chars) {
-    Arrays.fill(chars, '\0');
-  }
 }

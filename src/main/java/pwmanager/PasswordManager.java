@@ -187,16 +187,17 @@ public class PasswordManager {
   }
 
   public void saveToVault(File vaultFile) throws Exception {
-    // Build the file content
+    // Create a BAOS to write the vault content to
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
+    // Write a custom string to the BAOS
     for (Map.Entry<String, Credential> entry : passwords.entrySet()) {
       Credential credential = entry.getValue();
       String line = entry.getKey() + "||" + credential.getUsername() + "||" + credential.getPassword() + "\n";
       baos.write(Helpers.utf8StringToBytes(line));
     }
 
-    // Convert to byte array and encrypt it
+    // Convert BAOS content to byte array and encrypt it
     byte[] encrypted = encrypt(baos.toByteArray());
 
     // Write encrypted bytes to file
@@ -204,12 +205,13 @@ public class PasswordManager {
       fos.write(encrypted);
     }
 
-    // Clear byte arrays
+    // Clear byte arrays and close BAOS
     Helpers.clearArray(encrypted);
     baos.close();
   }
 
   public void loadFromVault(File vaultFile) throws Exception {
+    // Check if vault file exists
     if (!vaultFile.exists()) {
       System.out.println("No existing vault found. Starting fresh.");
       return;
@@ -236,6 +238,8 @@ public class PasswordManager {
       lineNumber++; // keep track of line number
 
       String[] parts = line.split(ENTRY_SEPARATOR);
+
+      // Skip line if it is malformed
       if (parts.length != 3) {
         System.out.println("Warning: skipping malformed line " + (lineNumber) + " in vault");
         continue;

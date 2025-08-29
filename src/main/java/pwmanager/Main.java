@@ -4,7 +4,6 @@ import utils.Helpers;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
@@ -12,20 +11,22 @@ import java.util.Scanner;
 public class Main {
   static boolean running = true;
 
+  static File dir = new File(System.getProperty("user.home"), ".password-manager");
+  static File masterPwdFile, vaultFile, saltFile;
+
   public static void main(String[] args) throws Exception {
     Scanner sc = new Scanner(System.in);
     char[] masterPassword;
 
-    // Create .password-manager directory and check if it's created properly
-    File dir = new File(System.getProperty("user.home"), ".password-manager");
+    // Check if ~/.password-manager directory is created properly
     if (!dir.exists() && !dir.mkdirs()) {
       throw new IOException("Failed to create directory " + dir.getAbsolutePath());
     }
 
-    // Create master password, vault, salt file
-    File masterPwdFile = new File(dir, "master.dat");
-    File vaultFile = new File(dir, "vault.dat");
-    File saltFile = new File(dir, "vault.salt");
+    // Create master password, vault, salt file objects
+    masterPwdFile = new File(dir, "master.dat");
+    vaultFile = new File(dir, "vault.dat");
+    saltFile = new File(dir, "vault.salt");
 
     /* 
      - If master password file doesn't exist, prompt user to create a master password
@@ -43,7 +44,7 @@ public class Main {
     }
 
     PasswordManager manager = new PasswordManager(masterPassword, saltFile);
-    Helpers.clearArray(masterPassword);
+    Arrays.fill(masterPassword, '\0');
 
     manager.loadFromVault(vaultFile);
 
@@ -71,6 +72,13 @@ public class Main {
       case "delete", "del" -> deleteCredential(parts, manager, sc);
       case "help" -> showHelpText(parts);
       case "clear" -> {
+        /*
+         \033 - escape character
+         [ - CSI (beginning of control sequence)
+         1J - Clear screen from beginning to current cursor position
+          (0: cursor to bottom, 1: top to cursor, 2: entire screen)
+         H - same as 1;1H, move cursor to row 1, column 1
+        */
         // Warning: only works in ANSI-compatible terminals
         System.out.print("\033[1J\033[H");
         System.out.flush();
@@ -104,9 +112,11 @@ public class Main {
       return null;
     }
 
+    // Select all character sets by default
     boolean upperChoice = true, lowerChoice = true, numbersChoice = true, symbolsChoice = true;
 
     if (parts.length > 2) {
+      // Override default with user selection
       upperChoice = false;
       lowerChoice = false;
       numbersChoice = false;
@@ -126,6 +136,7 @@ public class Main {
       }
     }
 
+    // Ensure at least one character set is selected
     if (!upperChoice && !lowerChoice && !numbersChoice && !symbolsChoice) {
       System.out.println("Error: At least one character set must be enabled.");
       return null;
@@ -197,6 +208,7 @@ public class Main {
       return;
     }
 
+    // Loop through all arguments and print all given services
     for (int i = 1; i < parts.length; i++) {
       Credential credential = manager.getCredential(parts[i]);
       if (credential == null) {
@@ -218,6 +230,7 @@ public class Main {
       return;
     }
 
+    // Loop through all the arguments and delete all given services
     for (int i = 1; i < parts.length; i++) {
       if (getConfirmation(sc, "Are you sure you want to delete service " + parts[i] + "?")) {
         if (manager.deleteCredential(parts[i])) {
@@ -268,11 +281,13 @@ public class Main {
       // Compact listing
       // Find the maximum length of a service and add padding
       int maxLength = services.stream().mapToInt(String::length).max().orElse(0) + 4;
+      int perLine = 6;
 
       // Set the width of each service to be the max length + padding
       for (int i = 0; i < services.size(); i++) {
         System.out.format("%-" + maxLength + "s", services.get(i));
-        if ((i + 1) % 6 == 0 || i == services.size() - 1) {
+        // Move to next line if reached value of perLine
+        if ((i + 1) % perLine == 0 || i == services.size() - 1) {
           System.out.print('\n');
         }
       }
@@ -436,8 +451,6 @@ public class Main {
   }
 
   private static void saveToVault(PasswordManager manager) throws Exception {
-    File vaultFile = new File(System.getProperty("user.home"), ".password-manager/vault.dat");
-
     manager.saveToVault(vaultFile);
     System.out.println("Changes saved.");
   }
