@@ -68,6 +68,11 @@ public class Main {
       case "list", "ls" -> listServices(parts, manager.listServices());
       case "delete", "del" -> deleteCredential(parts, manager, sc);
       case "help" -> showHelpText(parts);
+      case "clear" -> {
+        // Warning: only works in ANSI-compatible terminals
+        System.out.print("\033[1J\033[H");
+        System.out.flush();
+      }
       case "quit", "exit" -> running = false;
       default -> System.out.println("Invalid command: " + parts[0] + ". Please enter a valid command.");
     }
