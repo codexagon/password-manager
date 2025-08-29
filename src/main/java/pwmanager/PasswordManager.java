@@ -16,6 +16,7 @@ import java.util.*;
 public class PasswordManager {
   private Map<String, Credential> passwords = new HashMap<>();
   private SecretKeySpec secretKey;
+  private byte[] salt;
 
   // Constants
   private static final int SALT_LENGTH = 16;     // 16 bytes = 128 bits
@@ -25,7 +26,6 @@ public class PasswordManager {
   private static final int GCM_TAG_LENGTH = 128; // 128-bit auth tag
 
   public PasswordManager(char[] masterPassword, File saltFile) throws Exception {
-    byte[] salt;
     if (saltFile.exists()) {
       // If salt file already exists, read its contents
       salt = Files.readAllBytes(saltFile.toPath());
@@ -44,6 +44,8 @@ public class PasswordManager {
     secretKey = getSecretKey(masterPassword, salt);
   }
 
+  public byte[] getSalt() { return salt; }
+
   public SecretKeySpec getSecretKey(char[] masterPassword, byte[] salt) throws Exception {
     /*
      - PBKDF2: Password-Based Key Derivation Function 2
@@ -54,6 +56,12 @@ public class PasswordManager {
     KeySpec spec = new PBEKeySpec(masterPassword, salt, ITERATIONS, KEY_LENGTH);
     byte[] keyBytes = factory.generateSecret(spec).getEncoded();
     return new SecretKeySpec(keyBytes, "AES");
+  }
+
+  public byte[] getDerivedKey(char[] masterPassword, byte[] salt) throws Exception {
+    SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+    KeySpec spec = new PBEKeySpec(masterPassword, salt, ITERATIONS, KEY_LENGTH);
+    return factory.generateSecret(spec).getEncoded();
   }
 
   public Credential addCredential(String service, String username, String password) throws Exception {

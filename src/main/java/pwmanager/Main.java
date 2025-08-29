@@ -4,6 +4,7 @@ import utils.Helpers;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
@@ -334,53 +335,48 @@ public class Main {
   private static void createMasterPassword(char[] masterPassword, File masterPwdFile, File saltFile) throws Exception {
     PasswordManager temp = new PasswordManager(masterPassword, saltFile);
 
-    // Convert char[] to byte[] for encryption
-    byte[] masterBytes = Helpers.utf8StringToBytes(new String(masterPassword));
-    byte[] encrypted = temp.encrypt(masterBytes);
+    // Derive key from master password (acts as a hash)
+    byte[] derivedKey = temp.getDerivedKey(masterPassword, temp.getSalt());
 
-    // Write the encrypted master password bytes to master.dat
+    // Write the derived key bytes to master.dat
     try (FileOutputStream fos = new FileOutputStream(masterPwdFile)) {
-      fos.write(encrypted);
+      fos.write(derivedKey);
     }
 
     // Clear sensitive arrays
-    Helpers.clearArray(masterBytes);
-    Helpers.clearArray(encrypted);
+    Helpers.clearArray(derivedKey);
 
     System.out.println("Master password set successfully.");
   }
 
   private static void verifyMasterPassword(char[] masterPassword, File masterPwdFile, File saltFile) throws Exception {
-    PasswordManager temp = new PasswordManager(masterPassword, saltFile);
-
     // Check if master.dat file exists
     if (!masterPwdFile.exists()) {
       System.out.println("No master password found.");
       return;
     }
 
-    // Read the encrypted master password bytes
-    byte[] encrypted = Files.readAllBytes(masterPwdFile.toPath());
+    // Read the stored derived key from master.dat
+    byte[] storedKey = Files.readAllBytes(masterPwdFile.toPath());
 
-    // Decrypt the encrypted master password and check if it matches the entered password
-    byte[] decrypted = null;
-    try {
-      decrypted = temp.decrypt(encrypted);
-      byte[] masterBytes = Helpers.utf8StringToBytes(new String(masterPassword));
-      if (!Arrays.equals(decrypted, masterBytes)) {
-        System.out.println("Incorrect master password. Exiting...");
-        if (decrypted != null) Helpers.clearArray(decrypted);
-        Helpers.clearArray(masterBytes);
-        Helpers.clearArray(encrypted);
-        System.exit(0);
-      }
-      Helpers.clearArray(masterBytes);
-    } catch (Exception e) {
+    // Derive key from entered master password
+    PasswordManager temp = new PasswordManager(masterPassword, saltFile);
+    byte[] enteredKey = temp.getDerivedKey(masterPassword, temp.getSalt());
+
+    // Compare derived keys
+    if (!Arrays.equals(storedKey, enteredKey)) {
       System.out.println("Incorrect master password. Exiting...");
-      if (decrypted != null) Helpers.clearArray(decrypted);
-      Helpers.clearArray(encrypted);
+
+      // Clear temporary arrays
+      Helpers.clearArray(storedKey);
+      Helpers.clearArray(enteredKey);
+
       System.exit(0);
     }
+
+    // Clear temporary arrays
+    Helpers.clearArray(storedKey);
+    Helpers.clearArray(enteredKey);
 
     System.out.println("Master password verified successfully.");
   }
