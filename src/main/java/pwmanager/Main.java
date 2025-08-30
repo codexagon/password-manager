@@ -214,7 +214,7 @@ public class Main {
 
   private static void getCredential(String[] parts, PasswordManager manager) throws Exception {
     if (parts.length < 2) {
-      System.out.println("Usage: get <service> [<service>...]");
+      System.out.println("Usage: get <service>...");
       return;
     }
 
@@ -236,7 +236,7 @@ public class Main {
 
   private static void deleteCredential(String[] parts, PasswordManager manager, Scanner sc) throws Exception {
     if (parts.length < 2) {
-      System.out.println("Usage: delete <service> [<service>...]");
+      System.out.println("Usage: delete <service>...");
       return;
     }
 
@@ -313,9 +313,9 @@ public class Main {
           generate <length> [options]           Generate a random password
           add <service> <username> <password>   Add a new credential
           update <service> <field> <value>      Update an existing credential
-          get <service>                         Retrieve stored credentials
-          list                                  List all services
-          delete <service>                      Deletes credentials for a service
+          get <service>...                      Retrieve stored credentials
+          list [options]                        List all services
+          delete <service>...                   Deletes credentials
           help [command]                        Shows help text
           quit | exit                           Exits the program
         """
@@ -325,8 +325,11 @@ public class Main {
       switch(command) {
         case "generate" -> System.out.println(
             """
-            Usage: generate <length> [-u/--uppercase] [-l/--lowercase] [-n/--numbers] [-s/--symbols]
+            Usage: generate <length> [options]
             Description: Generate a random password of given length.
+            
+            Arguments:
+              <length>            Length of the password to be generated
             
             Options:
               -u, --uppercase     Include uppercase letters
@@ -338,7 +341,7 @@ public class Main {
               generate 12 -u -n
               generate 16 --lowercase --symbols
             
-            Note: when no options are provided all options are selected by default.
+            Note: When no options are provided all options are selected by default.
             """
         );
         case "add" -> System.out.println(
@@ -346,7 +349,12 @@ public class Main {
             Usage: add <service> <username> <password>
             Description: Add a new credential.
             
-            Example:
+            Arguments:
+              <service>      Name of service to be added
+              <username>     Service username
+              <password>     Service password
+            
+            Examples:
               add github johndoe Password123
             """
         );
@@ -355,37 +363,59 @@ public class Main {
             Usage: update <service> <field> <newValue>
             Description: Update credentials for a service.
             
-            Fields:
-              username     Change the stored username
-              password     Change the stored password
-              service      Change the service name
+            Arguments:
+              <service>       Name of the service to be updated
+              <field>         The field to be updated
+              <newValue>      New value of the field
             
-            Example:
+            Fields:
+              username        Change the stored username
+              password        Change the stored password
+              service         Change the service name
+            
+            Examples:
               update github username janedoe
             """
         );
         case "get" -> System.out.println(
             """
-            Usage: get <service> [<service>...]
+            Usage: get <service>...
             Description: Retrieve credentials for one or more services.
             
-            Example:
+            Arguments:
+              <service>...     One or more services to fetch
+            
+            Examples:
               get github
               get github gitlab bitbucket
             """
         );
         case "list" -> System.out.println(
             """
-            Usage: list
+            Usage: list [options]
             Description: List all stored services.
+            
+            Options:
+              -n, --numbered     Use a numbered listing format
+              -l, --long         Use a long listing format
+            
+            Examples:
+              list
+              list -n
+              list --long
+            
+            Note: Services are displayed in compact mode by default
             """
         );
         case "delete" -> System.out.println(
             """
-            Usage: delete <service> [<services>...]
+            Usage: delete <service>...
             Description: Delete credentials for one or more services.
             
-            Example:
+            Arguments:
+              <service>...     One or more services to delete
+            
+            Examples:
               delete github
               delete github gitlab bitbucket
             """
