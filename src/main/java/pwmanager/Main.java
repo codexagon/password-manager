@@ -28,6 +28,10 @@ public class Main {
     vaultFile = new File(dir, "vault.dat");
     saltFile = new File(dir, "vault.salt");
 
+    // Enter alternate buffer and move cursor to top
+    System.out.print("\033[?1049h\033[H");
+    System.out.flush();
+
     /* 
      - If master password file doesn't exist, prompt user to create a master password
      - If master password file exists, verify the entered master password
@@ -71,19 +75,14 @@ public class Main {
       case "list", "ls" -> listServices(parts, manager.listServices());
       case "delete", "del" -> deleteCredential(parts, manager, sc);
       case "help" -> showHelpText(parts);
-      case "clear" -> {
-        /*
-         \033 - escape character
-         [ - CSI (beginning of control sequence)
-         1J - Clear screen from beginning to current cursor position
-          (0: cursor to bottom, 1: top to cursor, 2: entire screen)
-         H - same as 1;1H, move cursor to row 1, column 1
-        */
-        // Warning: only works in ANSI-compatible terminals
-        System.out.print("\033[1J\033[H");
+      case "clear" -> clearScreen();
+      case "quit", "exit" -> {
+        running = false;
+
+        // Exit alternate buffer
+        System.out.print("\033[?1049l");
         System.out.flush();
       }
-      case "quit", "exit" -> running = false;
       default -> System.out.println("Invalid command: " + parts[0] + ". Please enter a valid command.");
     }
   }
@@ -393,6 +392,12 @@ public class Main {
         default -> System.out.println("Unknown command: " + command + ". Type 'help' to see all available commands.");
       }
     }
+  }
+
+  private static void clearScreen() {
+    // Warning: only works in ANSI-compatible terminals
+    System.out.print("\033[2J\033[H"); // clear entire screen and move cursor to default position (row 1, column 1)
+    System.out.flush();
   }
 
   private static boolean getConfirmation(Scanner sc, String message) {
