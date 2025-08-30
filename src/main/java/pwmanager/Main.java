@@ -163,6 +163,12 @@ public class Main {
       return;
     }
 
+    // Check that no input contains || in them
+    if (parts[1].contains("||") || parts[2].contains("||") || password.contains("||")) {
+      System.out.println("Error: inputs cannot contain '||'. Please remove it.");
+      return;
+    }
+
     Credential old = manager.addCredential(parts[1], parts[2], password);
     if (old != null) {
       System.out.println("Credentials for service: " + parts[1] + " already exists. Use update instead.");
@@ -175,6 +181,11 @@ public class Main {
   private static void updateCredential(String[] parts, PasswordManager manager, Scanner sc) throws Exception {
     if (parts.length != 4) {
       System.out.println("Usage: update <service> <field> <newValue>");
+      return;
+    }
+
+    if (parts[3].contains("||")) {
+      System.out.println("Error: value cannot contain '||'. Please remove it.");
       return;
     }
 
