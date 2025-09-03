@@ -518,6 +518,10 @@ public class Main {
       Helpers.clearArray(storedKey);
       Helpers.clearArray(enteredKey);
 
+      // Exit alternate buffer
+      System.out.print("\033[?1049l");
+      System.out.flush();
+
       System.exit(0);
     }
 
