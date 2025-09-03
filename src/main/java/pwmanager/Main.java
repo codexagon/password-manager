@@ -73,6 +73,7 @@ public class Main {
       case "update", "u" -> updateCredential(parts, manager, sc);
       case "get", "g" -> getCredential(parts, manager);
       case "list", "ls" -> listServices(parts, manager.listServices());
+      case "search", "find" -> searchServices(parts, manager);
       case "delete", "del" -> deleteCredential(parts, manager, sc);
       case "help" -> showHelpText(parts);
       case "clear" -> clearScreen();
@@ -258,7 +259,7 @@ public class Main {
 
   private static void listServices(String[] parts, List<String> services) {
     if (services.isEmpty()) {
-      System.out.println("No services stored.");
+      System.out.println("No results found.");
       return;
     }
 
@@ -304,6 +305,16 @@ public class Main {
     }
   }
 
+  private static void searchServices(String[] parts, PasswordManager manager) {
+    if (parts.length < 2) {
+      System.out.println("Usage: search <searchTerm> [options]");
+      return;
+    }
+
+    List<String> searchResults = manager.searchServices(parts[1]);
+    listServices(parts, searchResults);
+  }
+
   private static void showHelpText(String[] parts) {
     if (parts.length == 1) {
       // Show a list of all commands and a one-line description
@@ -315,6 +326,7 @@ public class Main {
           update <service> <field> <value>      Update an existing credential
           get <service>...                      Retrieve stored credentials
           list [options]                        List all services
+          search <searchTerm> [options]         Search services
           delete <service>...                   Deletes credentials
           help [command]                        Shows help text
           quit | exit                           Exits the program
@@ -405,6 +417,26 @@ public class Main {
               list --long
             
             Note: Services are displayed in compact mode by default
+            """
+        );
+        case "search" -> System.out.println(
+            """
+            Usage: search <searchTerm> [options]
+            Description: Search for services.
+            
+            The search uses subsequence matching - letters must appear in
+            order but they need not be adjacent.
+            
+            Arguments:
+              <searchTerm>     The term to search for
+            
+            Options:
+              Same as list command.
+            
+            Examples:
+              search git          # matches "github", "gitlab"
+              search google       # matches "google"
+              search fb           # matches "facebook"
             """
         );
         case "delete" -> System.out.println(

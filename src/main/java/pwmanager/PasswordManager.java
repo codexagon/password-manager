@@ -136,6 +136,32 @@ public class PasswordManager {
     return new ArrayList<>(passwords.keySet());
   }
 
+  public List<String> searchServices(String searchTerm) {
+    List<String> searchResults = new ArrayList<>();
+    for (String service : passwords.keySet()) {
+      if (isSubsequence(searchTerm, service)) {
+        searchResults.add(service);
+      }
+    }
+
+    return searchResults;
+  }
+
+  private boolean isSubsequence(String searchTerm, String text) {
+    if (searchTerm == null || text == null) return false;
+    if (searchTerm.isEmpty()) return true; // empty search term matches with everything
+
+    searchTerm = searchTerm.toLowerCase();
+    text = text.toLowerCase();
+
+    int i = 0;
+    for (int j = 0; j < text.length() && i < searchTerm.length(); j++) {
+      if (searchTerm.charAt(i) == text.charAt(j)) i++;
+    }
+
+    return i == searchTerm.length();
+  }
+
   public byte[] encrypt(byte[] plaintextBytes) throws Exception {
     // Initialize AES cipher in GCM mode with no padding
     Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
