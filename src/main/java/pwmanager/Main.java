@@ -335,7 +335,7 @@ public class Main {
     } else {
       String command = parts[1].toLowerCase();
       switch(command) {
-        case "generate" -> System.out.println(
+        case "generate", "gen" -> System.out.println(
             """
             Usage: generate <length> [options]
             Description: Generate a random password of given length.
@@ -356,7 +356,7 @@ public class Main {
             Note: When no options are provided all options are selected by default.
             """
         );
-        case "add" -> System.out.println(
+        case "add", "a" -> System.out.println(
             """
             Usage: add <service> <username> <password>
             Description: Add a new credential.
@@ -370,7 +370,7 @@ public class Main {
               add github johndoe Password123
             """
         );
-        case "update" -> System.out.println(
+        case "update", "u" -> System.out.println(
             """
             Usage: update <service> <field> <newValue>
             Description: Update credentials for a service.
@@ -389,7 +389,7 @@ public class Main {
               update github username janedoe
             """
         );
-        case "get" -> System.out.println(
+        case "get", "g" -> System.out.println(
             """
             Usage: get <service>...
             Description: Retrieve credentials for one or more services.
@@ -402,7 +402,7 @@ public class Main {
               get github gitlab bitbucket
             """
         );
-        case "list" -> System.out.println(
+        case "list", "ls" -> System.out.println(
             """
             Usage: list [options]
             Description: List all stored services.
@@ -419,7 +419,7 @@ public class Main {
             Note: Services are displayed in compact mode by default
             """
         );
-        case "search" -> System.out.println(
+        case "search", "find" -> System.out.println(
             """
             Usage: search <searchTerm> [options]
             Description: Search for services.
@@ -439,7 +439,7 @@ public class Main {
               search fb           # matches "facebook"
             """
         );
-        case "delete" -> System.out.println(
+        case "delete", "del" -> System.out.println(
             """
             Usage: delete <service>...
             Description: Delete credentials for one or more services.
