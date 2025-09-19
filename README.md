@@ -4,7 +4,7 @@ A command-line password manager built in Java that uses AES-256-GCM encryption t
 
 ## ⚠️ Disclaimer
 See [DISCLAIMER.md](DISCLAIMER.md) for important information.  
-This project is for **educational purposes only** and **not** for production use.
+This project is for **educational purposes only** and is **not** for production use.
 
 ## Features
 
@@ -75,7 +75,7 @@ Generate a secure random password with specified length and character sets.
 > generate 12 -u -n        # 12-character password with uppercase and numbers only
 ```
 
-#### Credential Management
+#### Managing Credentials
 ```bash
 > add <service> <username> <password>     # Add new credentials
 > get <service>...                        # Retrieve credentials  
@@ -91,7 +91,7 @@ Generate a secure random password with specified length and character sets.
 > delete github
 ```
 
-#### Service Discovery
+#### List & Search
 ```bash
 > list [options]                          # List all services
 > search <searchTerm> [options]           # Search services
@@ -124,8 +124,6 @@ Generate a secure random password with specified length and character sets.
 
 - **AES-256-GCM Encryption**: Industry-standard encryption with authentication
 - **PBKDF2 Key Derivation**: 100,000 iterations with unique salt
-- **Secure Random Generation**: Cryptographically secure random number generation
-- **Memory Clearing**: Sensitive data is overwritten in memory after use
 - **Master Password Verification**: Stored as derived key, not plaintext
 
 ## File Structure
@@ -137,7 +135,6 @@ The application creates a `.password-manager` directory in your home folder cont
 
 ## Command Examples
 
-### Basic Workflow
 ```bash
 # Generate a strong password
 > generate 16 -u -l -n -s
@@ -164,24 +161,23 @@ github
 Updated username for service: github
 ```
 
-## Security Considerations
+## Important Things to Note
 
 - Passwords are displayed in plaintext when retrieved. Ensure your terminal is private.
-- Choose a strong, unique master password. If forgotten, your vault cannot be recovered.
-- Consider backing up your `.password-manager` directory, though files are encrypted.
+- Choose a strong, unique master password. There is no way to recover your vault if you forget your password.
 
 ## Technical Details
 
-### Encryption Specification
-- **Algorithm**: AES-256-GCM
-- **Key Derivation**: PBKDF2WithHmacSHA256
-- **Iterations**: 100,000
-- **Salt Length**: 128 bits
-- **IV Length**: 96 bits (12 bytes)
-- **Authentication Tag**: 128 bits
+### Encryption
+- AES-256-GCM algorithm
+- PBKDF2WithHmacSHA256 key derivation
+- 100,000 iterations
+- 128 bits long salt
+- 96 bits (12 bytes) long IV
+- 128 bits authentication tag
 
 ## Requirements
 
 - Java 11+
-- Terminal with ANSI escape sequence support (for screen clearing)
-- Console access for secure password input
+- Terminal with support for ANSI escape sequences
+- Console access
